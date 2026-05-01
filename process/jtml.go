@@ -92,17 +92,14 @@ func processTemplate(template data.Template, tm map[string]data.Template, parame
 func processNode(template data.Template, tn data.TemplateNode, tm map[string]data.Template, parameters []data.Parameter, buf *bytes.Buffer) {
 	switch nt := tn.(type) {
 	case data.Raw:
-		val := nt.Value
-		if len(parameters) > 0 {
-			for j := len(parameters) - 1; j >= 0; j-- { // go backwards in case there's $10 and $1
-				idx := j + 1
-				val = strings.ReplaceAll(val, fmt.Sprintf("$%d", idx), parameters[j].Value)
-			}
-		}
+		val := replaceParams(nt.Value, parameters)
 		buf.WriteString(val)
 	case data.Include:
 		tmp, ok := tm[nt.Name]
 		pre, post := getPrePost(tmp)
+
+		pre = replaceParams(pre, nt.Parameters)
+		post = replaceParams(post, nt.Parameters)
 
 		if ok {
 			buf.WriteString(pre)
@@ -112,7 +109,7 @@ func processNode(template data.Template, tn data.TemplateNode, tm map[string]dat
 
 			}
 			buf.WriteString(val + "\n")
-			processNodes(template, nt.Children, tm, nt.Parameters, buf)
+			processNodes(template, nt.Children, tm, parameters, buf)
 			buf.WriteString(post + "\n")
 		}
 	case data.Root:
@@ -126,20 +123,29 @@ func processNodes(template data.Template, nodes []data.TemplateNode, tm map[stri
 	}
 }
 
-func paramValue(p []data.Parameter) string {
+func paramValue(plist []data.Parameter) string {
 	s := ""
-	for _, pp := range p {
-		s += pp.Value + " "
+	for _, p := range plist {
+		s += p.Value + " "
 	}
 	return strings.TrimRight(s, " ")
+}
+
+func replaceParams(val string, plist []data.Parameter) string {
+	for j := len(plist) - 1; j >= 0; j-- { // go backwards in case there's $10 and $1
+		idx := j + 1
+		val = strings.ReplaceAll(val, fmt.Sprintf("$%d", idx), plist[j].Value)
+	}
+	return val
 }
 
 func getPrePost(tmp data.Template) (string, string) {
 	var pre, post string
 	for _, d := range tmp.Directives() {
-		if d.Name == "open" {
+		switch d.Name {
+		case "open":
 			pre = paramValue(d.Parameters)
-		} else if d.Name == "close" {
+		case "close":
 			post = paramValue(d.Parameters)
 		}
 	}
