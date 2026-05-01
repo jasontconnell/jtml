@@ -38,37 +38,19 @@ func (p *parser) recurseParse(tokens []lexer.Token, cur *node, idx int, depth in
 
 		switch tk.Type {
 		case lexer.Raw:
-			raws := true
-			val := ""
-			ridx := idx
-			for raws && ridx < len(tokens) {
-				stk := tokens[ridx]
-				val += stk.Value + " "
-				raws = false
-				if ridx+1 < len(tokens) {
-					raws = tokens[ridx+1].Type == lexer.Raw
-					if raws {
-						ridx++
-					}
-				}
-			}
-			val = strings.TrimRight(val, " ")
+			st, ridx := p.consumeRawTokens(tokens, idx)
+			val := strings.Join(st, " ")
 
 			n := newNode(Raw, val, nil, depth)
 			cur.children = append(cur.children, n)
 			idx = ridx + 1
 		case lexer.Parameter:
 			idx++
-		case lexer.Include, lexer.Directive:
-			nt := Include
-			if tk.Type == lexer.Directive {
-				nt = Directive
-			}
-
+		case lexer.Include:
 			prms := p.getParameters(tokens, idx+1, tk.Level)
 			idx += len(prms) + 1
 
-			n := newNode(nt, tk.Value, prms, depth)
+			n := newNode(Include, tk.Value, prms, depth)
 			cur.children = append(cur.children, n)
 
 			recurse := p.hasChildren(tokens, idx, tk.Level)
@@ -76,9 +58,32 @@ func (p *parser) recurseParse(tokens []lexer.Token, cur *node, idx int, depth in
 				nc := p.recurseParse(tokens, n, idx, depth+1)
 				idx += nc + len(n.children) // adjust idx since we parsed those already
 			}
+		case lexer.Directive:
+			ss, didx := p.consumeRawTokens(tokens, idx+1)
+			n := newNode(Directive, tk.Value, []parameter{{index: 0, value: strings.Join(ss, " ")}}, tk.Level)
+			cur.children = append(cur.children, n)
+			idx = didx
 		}
 	}
 	return idx - start
+}
+
+func (p *parser) consumeRawTokens(tokens []lexer.Token, idx int) ([]string, int) {
+	st := []string{}
+	raws := tokens[idx].Type == lexer.Raw
+	for raws && idx < len(tokens) {
+		stk := tokens[idx]
+		st = append(st, stk.Value)
+		raws = false
+		if idx+1 < len(tokens) {
+			raws = tokens[idx+1].Type == lexer.Raw
+			if raws {
+				idx++
+			}
+		}
+	}
+
+	return st, idx
 }
 
 func (p *parser) getParameters(tokens []lexer.Token, idx, level int) []parameter {
