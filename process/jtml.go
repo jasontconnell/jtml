@@ -99,7 +99,7 @@ func processNode(template data.Template, tn data.TemplateNode, tm map[string]dat
 				val = strings.ReplaceAll(val, fmt.Sprintf("$%d", idx), parameters[j].Value)
 			}
 		}
-		buf.WriteString(val + " ")
+		buf.WriteString(val)
 	case data.Include:
 		tmp, ok := tm[nt.Name]
 		pre, post := getPrePost(tmp)
@@ -131,7 +131,7 @@ func paramValue(p []data.Parameter) string {
 	for _, pp := range p {
 		s += pp.Value + " "
 	}
-	return s
+	return strings.TrimRight(s, " ")
 }
 
 func getPrePost(tmp data.Template) (string, string) {

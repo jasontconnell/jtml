@@ -38,9 +38,25 @@ func (p *parser) recurseParse(tokens []lexer.Token, cur *node, idx int, depth in
 
 		switch tk.Type {
 		case lexer.Raw:
-			n := newNode(Raw, tk.Value, nil, depth)
+			raws := true
+			val := ""
+			ridx := idx
+			for raws && ridx < len(tokens) {
+				stk := tokens[ridx]
+				val += stk.Value + " "
+				raws = false
+				if ridx+1 < len(tokens) {
+					raws = tokens[ridx+1].Type == lexer.Raw
+					if raws {
+						ridx++
+					}
+				}
+			}
+			val = strings.TrimRight(val, " ")
+
+			n := newNode(Raw, val, nil, depth)
 			cur.children = append(cur.children, n)
-			idx++
+			idx = ridx + 1
 		case lexer.Parameter:
 			idx++
 		case lexer.Include, lexer.Directive:
