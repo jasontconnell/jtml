@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -23,17 +25,23 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	templateResults, err := process.ProcessTemplates(templates)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	var errs error
 	for _, res := range templateResults {
 		filename := res.Template.Name + ".html"
 		path := filepath.Join(*dest, filename)
 		err = os.WriteFile(path, []byte(res.Contents), os.ModePerm)
 		if err != nil {
-			log.Println("writing file", filename, err)
+			errs = errors.Join(errs, fmt.Errorf("writing file %s %w", filename, err))
 		}
+	}
+
+	if errs != nil {
+		log.Fatal(errs)
 	}
 }

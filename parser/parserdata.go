@@ -9,6 +9,21 @@ const (
 	Root
 )
 
+func (nt NodeType) String() string {
+	s := "Undefined"
+	switch nt {
+	case Raw:
+		s = "Raw"
+	case Directive:
+		s = "Directive"
+	case Include:
+		s = "Include"
+	case Root:
+		s = "Root"
+	}
+	return s
+}
+
 type Node interface {
 	TokenLiteral() string
 	GetChildren() []Node

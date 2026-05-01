@@ -1,5 +1,7 @@
 package lexer
 
+import "fmt"
+
 type lexer struct {
 	input string
 	pos   int
@@ -38,6 +40,10 @@ type Token struct {
 	LineNum int
 }
 
+func (t Token) String() string {
+	return fmt.Sprintf("%s start: %d type: %v level: %d line: %d", t.Value, t.Start, t.Type, t.Level, t.LineNum)
+}
+
 func Lex(input string) []Token {
 	lex := &lexer{input: input}
 	return lex.getTokens()
@@ -67,6 +73,7 @@ func (l *lexer) getTokens() []Token {
 				incline = true
 			} else {
 				curstate = Raw
+				incline = false
 			}
 
 			identifier := l.getIdentifier(l.input, sp)

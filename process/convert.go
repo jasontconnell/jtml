@@ -6,12 +6,13 @@ import (
 )
 
 type rootNode struct {
-	Node parser.Node
-	Name string
+	Node      parser.Node
+	Name      string
+	IsPartial bool
 }
 
 func toTemplate(r rootNode) data.Template {
-	t := data.Template{Name: r.Name}
+	t := data.Template{Name: r.Name, RootNode: convertNode(r.Node), IsPartial: r.IsPartial}
 	return t
 }
 
@@ -23,6 +24,20 @@ func convertNode(n parser.Node) data.TemplateNode {
 			Name:       n.TokenLiteral(),
 			Parameters: convertParameters(n.GetParameters()),
 			Children:   convertNodes(n.GetChildren()),
+		}
+	case parser.Include:
+		tn = data.Include{
+			Name:       n.TokenLiteral(),
+			Parameters: convertParameters(n.GetParameters()),
+			Children:   convertNodes(n.GetChildren()),
+		}
+	case parser.Root:
+		tn = data.Root{
+			Children: convertNodes(n.GetChildren()),
+		}
+	case parser.Raw:
+		tn = data.Raw{
+			Value: n.TokenLiteral(),
 		}
 	}
 	return tn

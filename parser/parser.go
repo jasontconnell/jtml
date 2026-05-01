@@ -2,7 +2,6 @@ package parser
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/jasontconnell/jtml/lexer"
@@ -29,7 +28,6 @@ func (p *parser) Parse(tokens []lexer.Token) Node {
 	root := newNode(Root, "", nil, 0)
 	p.recurseParse(tokens, root, 0, 0)
 
-	p.DebugPrint(root)
 	return root
 }
 
@@ -44,10 +42,8 @@ func (p *parser) recurseParse(tokens []lexer.Token, cur *node, idx int, depth in
 			cur.children = append(cur.children, n)
 			idx++
 		case lexer.Parameter:
-			log.Println("came across parameter, skipping", tk.Type, tk.Value)
 			idx++
 		case lexer.Include, lexer.Directive:
-			log.Println("got", tk.Type, tk.Value, "parent", cur.raw)
 			nt := Include
 			if tk.Type == lexer.Directive {
 				nt = Directive
@@ -56,19 +52,13 @@ func (p *parser) recurseParse(tokens []lexer.Token, cur *node, idx int, depth in
 			prms := p.getParameters(tokens, idx+1, tk.Level)
 			idx += len(prms) + 1
 
-			log.Println("got params", tk.Type, tk.Value, len(prms))
-
 			n := newNode(nt, tk.Value, prms, depth)
 			cur.children = append(cur.children, n)
 
 			recurse := p.hasChildren(tokens, idx, tk.Level)
-			log.Println("has children", tk.Type, tk.Value, recurse)
 			if recurse {
-				log.Println("recurse", n.raw, "parent", cur.raw)
 				nc := p.recurseParse(tokens, n, idx, depth+1)
 				idx += nc + len(n.children) // adjust idx since we parsed those already
-			} else {
-				// log.Println("no children", tk.Type, tk.Value, "next token", tokens[idx].Value, tokens[idx].Type)
 			}
 		}
 	}

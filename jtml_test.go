@@ -8,7 +8,7 @@ import (
 	"github.com/jasontconnell/jtml/process"
 )
 
-var home = `@jtml
+var home = `#jtml
 
  #head
  
@@ -41,10 +41,7 @@ func TestParseTemplates(t *testing.T) {
 		t.Fail()
 	}
 	for _, tmpl := range tlist {
-		t.Log(tmpl.Name, len(tmpl.Nodes))
-		for _, n := range tmpl.Nodes {
-			t.Logf("%T", n)
-		}
+		t.Log(tmpl.Name)
 	}
 }
 
