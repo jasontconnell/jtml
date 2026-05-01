@@ -33,15 +33,16 @@ func (s State) String() string {
 }
 
 type Token struct {
-	Value   string
-	Start   int
-	Type    State
-	Level   int
-	LineNum int
+	Value     string
+	Start     int
+	Type      State
+	Level     int
+	LineNum   int
+	IsEndline bool
 }
 
 func (t Token) String() string {
-	return fmt.Sprintf("%s start: %d type: %v level: %d line: %d", t.Value, t.Start, t.Type, t.Level, t.LineNum)
+	return fmt.Sprintf("%s start: %d type: %v level: %d line: %d endline: %v", t.Value, t.Start, t.Type, t.Level, t.LineNum, t.IsEndline)
 }
 
 func Lex(input string) []Token {
@@ -76,13 +77,14 @@ func (l *lexer) getTokens() []Token {
 				incline = false
 			}
 
-			identifier := l.getIdentifier(l.input, sp)
+			identifier, endline := l.getIdentifier(l.input, sp)
 			tk := Token{
-				Type:    curstate,
-				Start:   pos,
-				Level:   level,
-				LineNum: linenum,
-				Value:   identifier,
+				Type:      curstate,
+				Start:     pos,
+				Level:     level,
+				LineNum:   linenum,
+				Value:     identifier,
+				IsEndline: endline,
 			}
 			tokens = append(tokens, tk)
 			pos += len(identifier)
@@ -96,17 +98,18 @@ func (l *lexer) getTokens() []Token {
 		case '\r':
 			continue
 		default:
-			identifier := l.getIdentifier(l.input, pos)
+			identifier, endline := l.getIdentifier(l.input, pos)
 			idtype := Raw
 			if incline {
 				idtype = Parameter
 			}
 			tk := Token{
-				Type:    idtype,
-				Start:   pos,
-				Value:   identifier,
-				LineNum: linenum,
-				Level:   level,
+				Type:      idtype,
+				Start:     pos,
+				Value:     identifier,
+				LineNum:   linenum,
+				Level:     level,
+				IsEndline: endline,
 			}
 			tokens = append(tokens, tk)
 			pos += len(identifier)
@@ -116,16 +119,18 @@ func (l *lexer) getTokens() []Token {
 	return tokens
 }
 
-func (l *lexer) getIdentifier(input string, pos int) string {
+func (l *lexer) getIdentifier(input string, pos int) (string, bool) {
 	id := ""
+	endline := false
 	for i := pos; i < len(input); i++ {
 		if input[i] == ' ' {
 			break
 		}
 		if input[i] == '\n' || input[i] == '\r' {
+			endline = true
 			break
 		}
 		id += string(input[i])
 	}
-	return id
+	return id, endline
 }

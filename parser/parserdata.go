@@ -48,15 +48,17 @@ type node struct {
 	children   []*node
 	nodeType   NodeType
 	depth      int
+	endline    bool
 }
 
-func newNode(nodeType NodeType, raw string, parameters []parameter, depth int) *node {
+func newNode(nodeType NodeType, raw string, parameters []parameter, depth int, endline bool) *node {
 	return &node{
 		nodeType:   nodeType,
 		raw:        raw,
 		parameters: parameters,
 		children:   []*node{},
 		depth:      depth,
+		endline:    endline,
 	}
 }
 

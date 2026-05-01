@@ -38,8 +38,7 @@ func ParseTemplates(path string) ([]data.Template, error) {
 		root := p.Parse(tokens)
 
 		isPartial := strings.HasPrefix(fn, "_")
-
-		roots = append(roots, rootNode{Node: root, Name: strings.TrimRight(strings.TrimLeft(fn, "_"), ext), IsPartial: isPartial})
+		roots = append(roots, rootNode{Node: root, Name: strings.TrimSuffix(strings.TrimLeft(fn, "_"), ext), IsPartial: isPartial})
 
 		return nil
 	})

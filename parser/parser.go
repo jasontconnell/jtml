@@ -25,7 +25,7 @@ func (p *parser) DebugPrint(r Node) {
 }
 
 func (p *parser) Parse(tokens []lexer.Token) Node {
-	root := newNode(Root, "", nil, 0)
+	root := newNode(Root, "", nil, 0, false)
 	p.recurseParse(tokens, root, 0, 0)
 
 	return root
@@ -38,10 +38,9 @@ func (p *parser) recurseParse(tokens []lexer.Token, cur *node, idx int, depth in
 
 		switch tk.Type {
 		case lexer.Raw:
-			st, ridx := p.consumeRawTokens(tokens, idx)
-			val := strings.Join(st, " ")
+			rawval, ridx := p.consumeRawTokens(tokens, idx)
 
-			n := newNode(Raw, val, nil, depth)
+			n := newNode(Raw, rawval, nil, depth, tk.IsEndline)
 			cur.children = append(cur.children, n)
 			idx = ridx + 1
 		case lexer.Parameter:
@@ -50,7 +49,7 @@ func (p *parser) recurseParse(tokens []lexer.Token, cur *node, idx int, depth in
 			prms := p.getParameters(tokens, idx+1, tk.Level)
 			idx += len(prms) + 1
 
-			n := newNode(Include, tk.Value, prms, depth)
+			n := newNode(Include, tk.Value, prms, depth, tk.IsEndline)
 			cur.children = append(cur.children, n)
 
 			recurse := p.hasChildren(tokens, idx, tk.Level)
@@ -59,8 +58,9 @@ func (p *parser) recurseParse(tokens []lexer.Token, cur *node, idx int, depth in
 				idx += nc + len(n.children) // adjust idx since we parsed those already
 			}
 		case lexer.Directive:
-			ss, didx := p.consumeRawTokens(tokens, idx+1)
-			n := newNode(Directive, tk.Value, []parameter{{index: 0, value: strings.Join(ss, " ")}}, tk.Level)
+			rawval, didx := p.consumeRawTokens(tokens, idx+1)
+
+			n := newNode(Directive, tk.Value, []parameter{{index: 0, value: rawval}}, tk.Level, tk.IsEndline)
 			cur.children = append(cur.children, n)
 			idx = didx + 1
 		}
@@ -68,12 +68,12 @@ func (p *parser) recurseParse(tokens []lexer.Token, cur *node, idx int, depth in
 	return idx - start
 }
 
-func (p *parser) consumeRawTokens(tokens []lexer.Token, idx int) ([]string, int) {
-	st := []string{}
+func (p *parser) consumeRawTokens(tokens []lexer.Token, idx int) (string, int) {
+	st := []lexer.Token{}
 	raws := tokens[idx].Type == lexer.Raw
 	for raws && idx < len(tokens) {
 		stk := tokens[idx]
-		st = append(st, stk.Value)
+		st = append(st, stk)
 		raws = false
 		if idx+1 < len(tokens) {
 			raws = tokens[idx+1].Type == lexer.Raw
@@ -83,7 +83,18 @@ func (p *parser) consumeRawTokens(tokens []lexer.Token, idx int) ([]string, int)
 		}
 	}
 
-	return st, idx
+	rawval := ""
+	for _, s := range st {
+		rawval += s.Value
+		if s.IsEndline {
+			rawval += "\n"
+		} else {
+			rawval += " "
+		}
+	}
+	rawval = strings.TrimRight(rawval, " ")
+
+	return rawval, idx
 }
 
 func (p *parser) getParameters(tokens []lexer.Token, idx, level int) []parameter {
