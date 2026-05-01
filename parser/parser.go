@@ -62,7 +62,7 @@ func (p *parser) recurseParse(tokens []lexer.Token, cur *node, idx int, depth in
 			ss, didx := p.consumeRawTokens(tokens, idx+1)
 			n := newNode(Directive, tk.Value, []parameter{{index: 0, value: strings.Join(ss, " ")}}, tk.Level)
 			cur.children = append(cur.children, n)
-			idx = didx
+			idx = didx + 1
 		}
 	}
 	return idx - start
