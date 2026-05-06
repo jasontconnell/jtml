@@ -11,6 +11,7 @@ import (
 var home = `#jtml
 
  #head
+  #css
  
  #body
   #menu
@@ -25,7 +26,7 @@ func TestJTML(t *testing.T) {
 	}
 }
 
-func TestParse(t *testing.T) {
+func TestParseRaw(t *testing.T) {
 	tokens := lexer.Lex(home)
 	p := parser.New()
 	root := p.Parse(tokens)
