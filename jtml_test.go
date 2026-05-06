@@ -8,15 +8,15 @@ import (
 	"github.com/jasontconnell/jtml/process"
 )
 
-var home = `#jtml
-
+var home = `
+#jtml Main
  #head
   #css
+  #js
  
- #body
-  #menu
-  #h1 Welcome!
-  #posts
+ #body body
+  #container 
+    Hello, World!
 `
 
 func TestJTML(t *testing.T) {
