@@ -92,13 +92,16 @@ func processNode(template data.Template, tn data.TemplateNode, tm map[string]dat
 	switch nt := tn.(type) {
 	case data.Raw:
 		val := replaceParams(nt.Value, parameters)
-		buf.WriteString(adjustDepth(val, depth))
+		buf.WriteString(adjustDepth(val, depth, nt.Depth))
+	case data.Stream:
+		val := processStream(nt.Stream)
+		buf.WriteString(adjustDepth(val, depth, 0))
 	case data.Include:
 		tmp, ok := tm[nt.Name]
 		pre, post := getPrePost(tmp)
 
-		pre = replaceParams(adjustDepth(pre, depth), nt.Parameters)
-		post = replaceParams(adjustDepth(post, depth), nt.Parameters)
+		pre = replaceParams(adjustDepth(pre, depth, nt.Depth), nt.Parameters)
+		post = replaceParams(adjustDepth(post, depth, nt.Depth), nt.Parameters)
 
 		if ok {
 			if pre != "" {
@@ -106,7 +109,7 @@ func processNode(template data.Template, tn data.TemplateNode, tm map[string]dat
 			}
 			val := processTemplate(tmp, tm, nt.Parameters, depth+1)
 			processNodes(template, nt.Children, tm, parameters, depth+1, buf)
-			buf.WriteString(adjustDepth(val, depth))
+			buf.WriteString(val)
 
 			if post != "" {
 				buf.WriteString(post)
@@ -123,10 +126,38 @@ func processNodes(template data.Template, nodes []data.TemplateNode, tm map[stri
 	}
 }
 
+func processStream(nodes []data.TemplateNode) string {
+	var s string
+	linestart := true
+	for _, n := range nodes {
+		if st, ok := n.(data.Raw); ok {
+			var pre string
+			if linestart && st.Depth > 0 {
+				pre = strings.Repeat(" ", st.Depth)
+			}
+			s += pre + st.Value
+			if st.Endline {
+				linestart = true
+				s += "\r\n"
+			} else {
+				s += " "
+				linestart = false
+			}
+		}
+	}
+	return s
+}
+
 func paramValue(plist []data.Parameter) string {
 	s := ""
 	for _, p := range plist {
-		s += strings.Trim(p.Value, trimset) + " "
+		s += strings.Trim(p.Value, trimset)
+		if p.Endline {
+			s += "\n"
+		} else {
+			s += " "
+		}
+
 	}
 	return strings.TrimRight(s, whitespace)
 }
@@ -139,12 +170,15 @@ func replaceParams(val string, plist []data.Parameter) string {
 	return val
 }
 
-func adjustDepth(val string, depth int) string {
+func adjustDepth(val string, docdepth, depth int) string {
+	if len(val) == 0 {
+		return ""
+	}
 	s := strings.Split(val, newline)
 	for i := 0; i < len(s); i++ {
-		s[i] = strings.Trim(s[i], trimset)
+		s[i] = strings.TrimRight(s[i], trimset)
 		if len(s[i]) > 0 {
-			s[i] = strings.Repeat(" ", depth) + s[i] + crlf
+			s[i] = strings.Repeat(" ", docdepth+depth) + s[i] + crlf
 		}
 	}
 	return strings.Join(s, "")

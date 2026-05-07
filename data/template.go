@@ -30,31 +30,43 @@ type TemplateNode interface {
 	node()
 	children() []TemplateNode
 	name() string
+	depth() int
 }
 
 type Include struct {
 	Name       string
 	Parameters []Parameter
 	Children   []TemplateNode
+	Depth      int
 }
 
 type Directive struct {
 	Name       string
 	Parameters []Parameter
 	Children   []TemplateNode
+	Depth      int
 }
 
 type Parameter struct {
-	Index int
-	Value string
+	Index   int
+	Value   string
+	Endline bool
+}
+
+type Stream struct {
+	Stream []TemplateNode
+	Depth  int
 }
 
 type Raw struct {
-	Value string
+	Value   string
+	Depth   int
+	Endline bool
 }
 
 type Root struct {
 	Children []TemplateNode
+	Depth    int
 }
 
 type TemplateResult struct {
@@ -66,13 +78,22 @@ func (n Include) node()   {}
 func (n Directive) node() {}
 func (n Raw) node()       {}
 func (n Root) node()      {}
+func (n Stream) node()    {}
 
 func (n Include) children() []TemplateNode   { return n.Children }
 func (n Directive) children() []TemplateNode { return n.Children }
 func (n Raw) children() []TemplateNode       { return nil }
 func (n Root) children() []TemplateNode      { return n.Children }
+func (n Stream) children() []TemplateNode    { return n.Stream }
 
 func (n Include) name() string   { return n.Name }
 func (n Directive) name() string { return n.Name }
 func (n Raw) name() string       { return n.Value }
 func (n Root) name() string      { return "_root_" }
+func (n Stream) name() string    { return "_stream_" }
+
+func (n Include) depth() int   { return n.Depth }
+func (n Directive) depth() int { return n.Depth }
+func (n Raw) depth() int       { return n.Depth }
+func (n Root) depth() int      { return -1 }
+func (n Stream) depth() int    { return n.Depth }

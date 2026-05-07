@@ -36,16 +36,16 @@ func (s State) String() string {
 }
 
 type Token struct {
-	Value     string
-	Start     int
-	Type      State
-	Level     int
-	LineNum   int
-	IsEndline bool
+	Value   string
+	Start   int
+	Type    State
+	Level   int
+	LineNum int
+	Endline bool
 }
 
 func (t Token) String() string {
-	return fmt.Sprintf("%s start: %d type: %v level: %d line: %d endline: %v", t.Value, t.Start, t.Type, t.Level, t.LineNum, t.IsEndline)
+	return fmt.Sprintf("%s start: %d type: %v level: %d line: %d endline: %v", t.Value, t.Start, t.Type, t.Level, t.LineNum, t.Endline)
 }
 
 func Lex(input string) []Token {
@@ -82,12 +82,12 @@ func (l *lexer) getTokens() []Token {
 
 			identifier, endline := l.getIdentifier(l.input, sp)
 			tk := Token{
-				Type:      curstate,
-				Start:     pos,
-				Level:     level,
-				LineNum:   linenum,
-				Value:     identifier,
-				IsEndline: endline,
+				Type:    curstate,
+				Start:   pos,
+				Level:   level,
+				LineNum: linenum,
+				Value:   identifier,
+				Endline: endline,
 			}
 			tokens = append(tokens, tk)
 			pos += len(identifier)
@@ -107,12 +107,12 @@ func (l *lexer) getTokens() []Token {
 				idtype = Parameter
 			}
 			tk := Token{
-				Type:      idtype,
-				Start:     pos,
-				Value:     identifier,
-				LineNum:   linenum,
-				Level:     level,
-				IsEndline: endline,
+				Type:    idtype,
+				Start:   pos,
+				Value:   identifier,
+				LineNum: linenum,
+				Level:   level,
+				Endline: endline,
 			}
 			tokens = append(tokens, tk)
 			pos += len(identifier)
@@ -134,6 +134,9 @@ func (l *lexer) getIdentifier(input string, pos int) (string, bool) {
 			break
 		}
 		id += strings.TrimSpace(string(input[i]))
+		if i == len(input)-1 {
+			endline = true
+		}
 	}
 	return id, endline
 }

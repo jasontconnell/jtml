@@ -24,31 +24,42 @@ func convertNode(n parser.Node) data.TemplateNode {
 			Name:       n.TokenLiteral(),
 			Parameters: convertParameters(n.GetParameters()),
 			Children:   convertNodes(n.GetChildren()),
+			Depth:      n.GetDepth(),
 		}
 	case parser.Include:
 		tn = data.Include{
 			Name:       n.TokenLiteral(),
 			Parameters: convertParameters(n.GetParameters()),
 			Children:   convertNodes(n.GetChildren()),
+			Depth:      n.GetDepth(),
 		}
 	case parser.Root:
 		tn = data.Root{
 			Children: convertNodes(n.GetChildren()),
+			Depth:    n.GetDepth(),
 		}
 	case parser.Raw:
 		tn = data.Raw{
-			Value: n.TokenLiteral(),
+			Value:   n.TokenLiteral(),
+			Depth:   n.GetDepth(),
+			Endline: n.GetEndline(),
+		}
+	case parser.Stream:
+		tn = data.Stream{
+			Stream: convertNodes(n.GetParameters()),
+			Depth:  n.GetDepth(),
 		}
 	}
 	return tn
 }
 
-func convertParameters(plist []parser.Parameter) []data.Parameter {
+func convertParameters(plist []parser.Node) []data.Parameter {
 	dplist := []data.Parameter{}
 	for _, p := range plist {
 		dp := data.Parameter{
-			Index: p.GetIndex(),
-			Value: p.GetValue(),
+			Index:   p.GetIndex(),
+			Value:   p.TokenLiteral(),
+			Endline: p.GetEndline(),
 		}
 		dplist = append(dplist, dp)
 	}

@@ -8,6 +8,7 @@ const (
 	Raw NodeType = iota
 	Directive
 	Include
+	Stream
 	Root
 )
 
@@ -20,6 +21,8 @@ func (nt NodeType) String() string {
 		s = "Directive"
 	case Include:
 		s = "Include"
+	case Stream:
+		s = "Stream"
 	case Root:
 		s = "Root"
 	}
@@ -29,33 +32,26 @@ func (nt NodeType) String() string {
 type Node interface {
 	TokenLiteral() string
 	GetChildren() []Node
-	GetParameters() []Parameter
+	GetParameters() []Node
 	GetType() NodeType
 	GetDepth() int
+	GetIndex() int
+	GetEndline() bool
 
 	String() string
 }
 
-type Parameter interface {
-	GetIndex() int
-	GetValue() string
-}
-
-type parameter struct {
-	index int
-	value string
-}
-
 type node struct {
+	index      int
 	raw        string
-	parameters []parameter
+	parameters []*node
 	children   []*node
 	nodeType   NodeType
 	depth      int
 	endline    bool
 }
 
-func newNode(nodeType NodeType, raw string, parameters []parameter, depth int, endline bool) *node {
+func newNode(nodeType NodeType, raw string, parameters []*node, depth int, endline bool) *node {
 	return &node{
 		nodeType:   nodeType,
 		raw:        raw,
@@ -69,7 +65,7 @@ func newNode(nodeType NodeType, raw string, parameters []parameter, depth int, e
 func (n *node) String() string {
 	prms := ""
 	for _, p := range n.parameters {
-		prms += fmt.Sprintf("[%d: %s] ", p.index, p.value)
+		prms += fmt.Sprintf("[%d: %s] ", p.index, p.raw)
 	}
 	s := fmt.Sprintf("%s %s %s (%d) [children: %d]", n.raw, n.nodeType, prms, n.depth, len(n.children))
 	return s
@@ -91,8 +87,8 @@ func (n *node) GetType() NodeType {
 	return n.nodeType
 }
 
-func (n *node) GetParameters() []Parameter {
-	list := []Parameter{}
+func (n *node) GetParameters() []Node {
+	list := []Node{}
 	for _, p := range n.parameters {
 		list = append(list, p)
 	}
@@ -103,10 +99,10 @@ func (n *node) GetDepth() int {
 	return n.depth
 }
 
-func (p parameter) GetIndex() int {
-	return p.index
+func (n *node) GetIndex() int {
+	return n.index
 }
 
-func (p parameter) GetValue() string {
-	return p.value
+func (n *node) GetEndline() bool {
+	return n.endline
 }

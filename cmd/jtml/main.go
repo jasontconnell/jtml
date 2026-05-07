@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/jasontconnell/jtml/process"
 )
@@ -15,6 +16,8 @@ func main() {
 	src := flag.String("src", "", "the source directory")
 	dest := flag.String("dest", "", "the destination directory")
 	flag.Parse()
+
+	start := time.Now()
 
 	if *src == "" || *dest == "" {
 		flag.PrintDefaults()
@@ -41,4 +44,6 @@ func main() {
 	if errs != nil {
 		log.Fatal(errs)
 	}
+
+	log.Println("finished", time.Since(start))
 }
