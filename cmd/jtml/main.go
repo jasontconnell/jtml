@@ -26,10 +26,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	templateResults, err := process.ProcessTemplates(templates)
-	if err != nil {
-		log.Fatal(err)
-	}
+	templateResults := process.ProcessTemplates(templates)
 
 	var errs error
 	for _, res := range templateResults {

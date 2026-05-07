@@ -54,7 +54,6 @@ func (p *parser) parse(tokens []lexer.Token, stack collections.Stack[*node]) {
 			log.Fatal("peek on empty stack")
 			return
 		}
-		log.Println(tk, "adding child to node", n, cur)
 		cur.children = append(cur.children, n)
 
 		next, hasNext := p.nextTokenNode(tokens, i+1)

@@ -2,10 +2,8 @@ package process
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io/fs"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,6 +11,13 @@ import (
 	"github.com/jasontconnell/jtml/data"
 	"github.com/jasontconnell/jtml/lexer"
 	"github.com/jasontconnell/jtml/parser"
+)
+
+const (
+	whitespace string = " \t"
+	trimset    string = " \r\n\t"
+	crlf       string = "\r\n"
+	newline    string = "\n"
 )
 
 func ParseTemplates(path string) ([]data.Template, error) {
@@ -33,11 +38,9 @@ func ParseTemplates(path string) ([]data.Template, error) {
 			return fmt.Errorf("reading file %s. %w", fpath, err)
 		}
 
-		log.Println(" -------------- ", fpath)
 		tokens := lexer.Lex(string(b))
 		p := parser.New()
 		root := p.Parse(tokens)
-		p.DebugPrint(root)
 
 		isPartial := strings.HasPrefix(fn, "_")
 		roots = append(roots, rootNode{Node: root, Name: strings.TrimSuffix(strings.TrimLeft(fn, "_"), ext), IsPartial: isPartial})
@@ -54,24 +57,19 @@ func ParseTemplates(path string) ([]data.Template, error) {
 	return templates, err
 }
 
-func ProcessTemplates(templates []data.Template) ([]data.TemplateResult, error) {
+func ProcessTemplates(templates []data.Template) []data.TemplateResult {
 	tm := make(map[string]data.Template)
 	for _, t := range templates {
 		tm[t.Name] = t
 	}
 
 	var results []data.TemplateResult
-	var errs error
 	for _, t := range templates {
 		if t.IsPartial {
 			continue
 		}
 
-		output, err := processTemplate(t, tm, nil, 0)
-		if err != nil {
-			errs = errors.Join(errs, fmt.Errorf("processing template %s %w", t.Name, err))
-			continue
-		}
+		output := processTemplate(t, tm, nil, 0)
 
 		res := data.TemplateResult{
 			Template: t,
@@ -80,18 +78,17 @@ func ProcessTemplates(templates []data.Template) ([]data.TemplateResult, error) 
 		results = append(results, res)
 	}
 
-	return results, errs
+	return results
 }
 
-func processTemplate(template data.Template, tm map[string]data.Template, parameters []data.Parameter, depth int) (string, error) {
+func processTemplate(template data.Template, tm map[string]data.Template, parameters []data.Parameter, depth int) string {
 	b := bytes.NewBufferString("")
 	processNode(template, template.RootNode, tm, parameters, depth, b)
 
-	return b.String(), nil
+	return b.String()
 }
 
 func processNode(template data.Template, tn data.TemplateNode, tm map[string]data.Template, parameters []data.Parameter, depth int, buf *bytes.Buffer) {
-	linePrefix := strings.Repeat(" ", depth)
 	switch nt := tn.(type) {
 	case data.Raw:
 		val := replaceParams(nt.Value, parameters)
@@ -103,18 +100,17 @@ func processNode(template data.Template, tn data.TemplateNode, tm map[string]dat
 		pre = replaceParams(adjustDepth(pre, depth), nt.Parameters)
 		post = replaceParams(adjustDepth(post, depth), nt.Parameters)
 
-		log.Println("pre, post", pre, post)
-
 		if ok {
-			buf.WriteString(linePrefix + pre)
-			val, err := processTemplate(tmp, tm, nt.Parameters, depth+1)
-			if err != nil {
-				log.Println("error processing template", tmp.Name, "in", template.Name, err)
-
+			if pre != "" {
+				buf.WriteString(pre)
 			}
+			val := processTemplate(tmp, tm, nt.Parameters, depth+1)
 			processNodes(template, nt.Children, tm, parameters, depth+1, buf)
-			buf.WriteString(linePrefix + val + "\n")
-			buf.WriteString(linePrefix + post + "\n")
+			buf.WriteString(adjustDepth(val, depth))
+
+			if post != "" {
+				buf.WriteString(post)
+			}
 		}
 	case data.Root:
 		processNodes(template, nt.Children, tm, parameters, depth, buf)
@@ -130,9 +126,9 @@ func processNodes(template data.Template, nodes []data.TemplateNode, tm map[stri
 func paramValue(plist []data.Parameter) string {
 	s := ""
 	for _, p := range plist {
-		s += p.Value + " "
+		s += strings.Trim(p.Value, trimset) + " "
 	}
-	return strings.TrimRight(s, " ")
+	return strings.TrimRight(s, whitespace)
 }
 
 func replaceParams(val string, plist []data.Parameter) string {
@@ -144,9 +140,12 @@ func replaceParams(val string, plist []data.Parameter) string {
 }
 
 func adjustDepth(val string, depth int) string {
-	s := strings.Split(val, "\n")
+	s := strings.Split(val, newline)
 	for i := 0; i < len(s); i++ {
-		s[i] = strings.Repeat(" ", depth) + s[i] + "\n"
+		s[i] = strings.Trim(s[i], trimset)
+		if len(s[i]) > 0 {
+			s[i] = strings.Repeat(" ", depth) + s[i] + crlf
+		}
 	}
 	return strings.Join(s, "")
 }

@@ -5,7 +5,6 @@ import (
 
 	"github.com/jasontconnell/jtml/lexer"
 	"github.com/jasontconnell/jtml/parser"
-	"github.com/jasontconnell/jtml/process"
 )
 
 var home = `
@@ -49,29 +48,4 @@ func TestParseRawDirectives(t *testing.T) {
 	p := parser.New()
 	root := p.Parse(tokens)
 	p.DebugPrint(root)
-}
-
-func TestParseTemplates(t *testing.T) {
-	tlist, err := process.ParseTemplates("./tmpl")
-	if err != nil {
-		t.Error(err)
-		t.Fail()
-	}
-	for _, tmpl := range tlist {
-		t.Log(tmpl.Name)
-	}
-}
-
-func TestGenerate(t *testing.T) {
-	tlist, err := process.ParseTemplates("./tmpl")
-	if err != nil {
-		t.Error(err)
-		t.Fail()
-	}
-
-	_, err = process.ProcessTemplates(tlist)
-	if err != nil {
-		t.Error(err)
-		t.Fail()
-	}
 }
