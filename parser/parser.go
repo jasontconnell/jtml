@@ -56,17 +56,25 @@ func (p *parser) parse(tokens []lexer.Token, stack collections.Stack[*node]) {
 		}
 		cur.children = append(cur.children, n)
 
-		next, hasNext := p.nextTokenNode(tokens, i+1)
+		next, nextIndex, hasNext := p.nextTokenNode(tokens, i+1)
 
-		if hasNext && next.Level > tk.Level {
-			stack.Push(n)
-		} else if hasNext {
-			for j := 0; j < tk.Level-next.Level; j++ {
-				stack.Pop()
+		log.Println(tk, next, hasNext, num, i, i+num, len(tokens))
+
+		if hasNext {
+			i = nextIndex
+			if next.Level > tk.Level {
+				stack.Push(n)
+			} else {
+				for stack.Len() > next.Level+1 {
+					stack.Pop()
+				}
 			}
+		} else {
+			i += num
+
 		}
 
-		i += num
+		log.Println(tk, i, len(tokens))
 	}
 }
 
@@ -90,9 +98,10 @@ func (p *parser) nodeFromToken(tokens []lexer.Token, tk lexer.Token, idx, depth 
 	return n, consumed
 }
 
-func (p *parser) nextTokenNode(tokens []lexer.Token, start int) (lexer.Token, bool) {
+func (p *parser) nextTokenNode(tokens []lexer.Token, start int) (lexer.Token, int, bool) {
 	var tk lexer.Token
 	var found bool
+	var index int
 	for i := start; i < len(tokens) && !found; i++ {
 		switch tokens[i].Type {
 		case lexer.Parameter:
@@ -100,10 +109,11 @@ func (p *parser) nextTokenNode(tokens []lexer.Token, start int) (lexer.Token, bo
 		case lexer.Include, lexer.Directive, lexer.Raw:
 			tk = tokens[i]
 			found = true
+			index = i
 		}
 	}
 
-	return tk, found
+	return tk, index, found
 }
 
 func (p *parser) consumeRawTokens(tokens []lexer.Token, start int) ([]*node, int) {

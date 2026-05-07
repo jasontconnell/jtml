@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -41,6 +42,12 @@ func ParseTemplates(path string) ([]data.Template, error) {
 		tokens := lexer.Lex(string(b))
 		p := parser.New()
 		root := p.Parse(tokens)
+
+		log.Print(fpath, "\n\n")
+		p.DebugPrint(root)
+		// for _, token := range tokens {
+		// 	log.Println(token)
+		// }
 
 		isPartial := strings.HasPrefix(fn, "_")
 		roots = append(roots, rootNode{Node: root, Name: strings.TrimSuffix(strings.TrimLeft(fn, "_"), ext), IsPartial: isPartial})
