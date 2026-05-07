@@ -1,6 +1,9 @@
 package lexer
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type lexer struct {
 	input string
@@ -130,7 +133,7 @@ func (l *lexer) getIdentifier(input string, pos int) (string, bool) {
 			endline = true
 			break
 		}
-		id += string(input[i])
+		id += strings.TrimSpace(string(input[i]))
 	}
 	return id, endline
 }

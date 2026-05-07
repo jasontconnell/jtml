@@ -1,5 +1,7 @@
 package parser
 
+import "fmt"
+
 type NodeType int
 
 const (
@@ -30,6 +32,8 @@ type Node interface {
 	GetParameters() []Parameter
 	GetType() NodeType
 	GetDepth() int
+
+	String() string
 }
 
 type Parameter interface {
@@ -60,6 +64,15 @@ func newNode(nodeType NodeType, raw string, parameters []parameter, depth int, e
 		depth:      depth,
 		endline:    endline,
 	}
+}
+
+func (n *node) String() string {
+	prms := ""
+	for _, p := range n.parameters {
+		prms += fmt.Sprintf("[%d: %s] ", p.index, p.value)
+	}
+	s := fmt.Sprintf("%s %s %s (%d) [children: %d]", n.raw, n.nodeType, prms, n.depth, len(n.children))
+	return s
 }
 
 func (n *node) TokenLiteral() string {

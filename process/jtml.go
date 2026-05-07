@@ -33,9 +33,11 @@ func ParseTemplates(path string) ([]data.Template, error) {
 			return fmt.Errorf("reading file %s. %w", fpath, err)
 		}
 
+		log.Println(" -------------- ", fpath)
 		tokens := lexer.Lex(string(b))
 		p := parser.New()
 		root := p.Parse(tokens)
+		p.DebugPrint(root)
 
 		isPartial := strings.HasPrefix(fn, "_")
 		roots = append(roots, rootNode{Node: root, Name: strings.TrimSuffix(strings.TrimLeft(fn, "_"), ext), IsPartial: isPartial})
@@ -65,7 +67,7 @@ func ProcessTemplates(templates []data.Template) ([]data.TemplateResult, error) 
 			continue
 		}
 
-		output, err := processTemplate(t, tm, nil)
+		output, err := processTemplate(t, tm, nil, 0)
 		if err != nil {
 			errs = errors.Join(errs, fmt.Errorf("processing template %s %w", t.Name, err))
 			continue
@@ -81,44 +83,47 @@ func ProcessTemplates(templates []data.Template) ([]data.TemplateResult, error) 
 	return results, errs
 }
 
-func processTemplate(template data.Template, tm map[string]data.Template, parameters []data.Parameter) (string, error) {
+func processTemplate(template data.Template, tm map[string]data.Template, parameters []data.Parameter, depth int) (string, error) {
 	b := bytes.NewBufferString("")
-	processNode(template, template.RootNode, tm, parameters, b)
+	processNode(template, template.RootNode, tm, parameters, depth, b)
 
 	return b.String(), nil
 }
 
-func processNode(template data.Template, tn data.TemplateNode, tm map[string]data.Template, parameters []data.Parameter, buf *bytes.Buffer) {
+func processNode(template data.Template, tn data.TemplateNode, tm map[string]data.Template, parameters []data.Parameter, depth int, buf *bytes.Buffer) {
+	linePrefix := strings.Repeat(" ", depth)
 	switch nt := tn.(type) {
 	case data.Raw:
 		val := replaceParams(nt.Value, parameters)
-		buf.WriteString(val)
+		buf.WriteString(adjustDepth(val, depth))
 	case data.Include:
 		tmp, ok := tm[nt.Name]
 		pre, post := getPrePost(tmp)
 
-		pre = replaceParams(pre, nt.Parameters)
-		post = replaceParams(post, nt.Parameters)
+		pre = replaceParams(adjustDepth(pre, depth), nt.Parameters)
+		post = replaceParams(adjustDepth(post, depth), nt.Parameters)
+
+		log.Println("pre, post", pre, post)
 
 		if ok {
-			buf.WriteString(pre)
-			val, err := processTemplate(tmp, tm, nt.Parameters)
+			buf.WriteString(linePrefix + pre)
+			val, err := processTemplate(tmp, tm, nt.Parameters, depth+1)
 			if err != nil {
 				log.Println("error processing template", tmp.Name, "in", template.Name, err)
 
 			}
-			buf.WriteString(val + "\n")
-			processNodes(template, nt.Children, tm, parameters, buf)
-			buf.WriteString(post + "\n")
+			processNodes(template, nt.Children, tm, parameters, depth+1, buf)
+			buf.WriteString(linePrefix + val + "\n")
+			buf.WriteString(linePrefix + post + "\n")
 		}
 	case data.Root:
-		processNodes(template, nt.Children, tm, parameters, buf)
+		processNodes(template, nt.Children, tm, parameters, depth, buf)
 	}
 }
 
-func processNodes(template data.Template, nodes []data.TemplateNode, tm map[string]data.Template, parameters []data.Parameter, buf *bytes.Buffer) {
+func processNodes(template data.Template, nodes []data.TemplateNode, tm map[string]data.Template, parameters []data.Parameter, depth int, buf *bytes.Buffer) {
 	for _, c := range nodes {
-		processNode(template, c, tm, parameters, buf)
+		processNode(template, c, tm, parameters, depth+1, buf)
 	}
 }
 
@@ -136,6 +141,14 @@ func replaceParams(val string, plist []data.Parameter) string {
 		val = strings.ReplaceAll(val, fmt.Sprintf("$%d", idx), plist[j].Value)
 	}
 	return val
+}
+
+func adjustDepth(val string, depth int) string {
+	s := strings.Split(val, "\n")
+	for i := 0; i < len(s); i++ {
+		s[i] = strings.Repeat(" ", depth) + s[i] + "\n"
+	}
+	return strings.Join(s, "")
 }
 
 func getPrePost(tmp data.Template) (string, string) {

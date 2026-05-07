@@ -22,7 +22,7 @@ func (p *parser) DebugPrint(r Node) {
 		depth = 0
 	}
 
-	fmt.Println("---", strings.Repeat(" ", depth), r.TokenLiteral())
+	fmt.Println("---", strings.Repeat(" ", depth), r)
 
 	c := r.GetChildren()
 	if len(c) > 0 {
@@ -38,10 +38,8 @@ func (p *parser) Parse(tokens []lexer.Token) Node {
 	stack := collections.NewStack[*node]()
 	stack.Push(root)
 
-	// p.recurseParse(tokens, root, 0, 0)
 	p.parse(tokens, stack)
 
-	p.DebugPrint(root)
 	return root
 }
 
@@ -56,6 +54,7 @@ func (p *parser) parse(tokens []lexer.Token, stack collections.Stack[*node]) {
 			log.Fatal("peek on empty stack")
 			return
 		}
+		log.Println(tk, "adding child to node", n, cur)
 		cur.children = append(cur.children, n)
 
 		next, hasNext := p.nextTokenNode(tokens, i+1)
@@ -97,9 +96,9 @@ func (p *parser) nextTokenNode(tokens []lexer.Token, start int) (lexer.Token, bo
 	var found bool
 	for i := start; i < len(tokens) && !found; i++ {
 		switch tokens[i].Type {
-		case lexer.Raw, lexer.Parameter:
+		case lexer.Parameter:
 			continue
-		case lexer.Include, lexer.Directive:
+		case lexer.Include, lexer.Directive, lexer.Raw:
 			tk = tokens[i]
 			found = true
 		}
@@ -111,16 +110,12 @@ func (p *parser) nextTokenNode(tokens []lexer.Token, start int) (lexer.Token, bo
 func (p *parser) consumeRawTokens(tokens []lexer.Token, start int) (string, int) {
 	st := []lexer.Token{}
 	raws := tokens[start].Type == lexer.Raw
-	ntokens := 0
-	for raws && start+ntokens < len(tokens) {
-		stk := tokens[start+ntokens]
+	for raws && start+len(st) < len(tokens) {
+		stk := tokens[start+len(st)]
 		st = append(st, stk)
 		raws = false
-		if start+ntokens+1 < len(tokens) {
-			raws = tokens[start+1].Type == lexer.Raw
-			if raws {
-				ntokens++
-			}
+		if start+len(st) < len(tokens) {
+			raws = tokens[start+len(st)].Type == lexer.Raw
 		}
 	}
 
@@ -135,7 +130,7 @@ func (p *parser) consumeRawTokens(tokens []lexer.Token, start int) (string, int)
 	}
 	rawval = strings.TrimRight(rawval, " ")
 
-	return rawval, ntokens
+	return rawval, len(st)
 }
 
 func (p *parser) getParameters(tokens []lexer.Token, start, level int) []parameter {
