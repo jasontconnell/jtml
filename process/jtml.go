@@ -26,7 +26,8 @@ func ParseTemplates(path string, srcext string) ([]data.Template, error) {
 		if f.IsDir() {
 			return nil
 		}
-		_, fn := filepath.Split(fpath)
+
+		dir, fn := filepath.Split(fpath)
 		ext := filepath.Ext(fn)
 
 		if ext != "."+srcext {
@@ -42,8 +43,13 @@ func ParseTemplates(path string, srcext string) ([]data.Template, error) {
 		p := parser.New()
 		root := p.Parse(tokens)
 
+		d := strings.TrimPrefix(dir, path)
+		cleandir := strings.TrimPrefix(strings.TrimPrefix(d, "/"), "\\")
+		name := strings.Replace(cleandir, "\\", "/", -1) + strings.TrimLeft(fn, "_")
+		name = strings.TrimSuffix(name, "."+srcext)
+
 		isPartial := strings.HasPrefix(fn, "_")
-		roots = append(roots, rootNode{Node: root, Name: strings.TrimSuffix(strings.TrimLeft(fn, "_"), ext), IsPartial: isPartial})
+		roots = append(roots, rootNode{Node: root, Name: name, IsPartial: isPartial})
 
 		return nil
 	})
@@ -114,6 +120,8 @@ func processNode(template data.Template, tn data.TemplateNode, tm map[string]dat
 			if post != "" {
 				buf.WriteString(post)
 			}
+		} else {
+			buf.WriteString(adjustDepth("<!-- template "+nt.Name+" doesn't exist -->", depth, 0))
 		}
 	case data.Root:
 		processNodes(template, nt.Children, tm, parameters, depth, buf)

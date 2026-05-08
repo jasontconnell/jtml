@@ -18,6 +18,10 @@ func (t Template) Directives() []Directive {
 }
 
 func (t Template) traverseNodes(n TemplateNode, f func(tn TemplateNode)) {
+	if n == nil {
+		return
+	}
+
 	for _, tn := range n.children() {
 		f(tn)
 		if tn != nil && len(tn.children()) > 0 {
