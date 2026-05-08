@@ -47,10 +47,20 @@ _h1.txt
 
 Will output `<h1>Hello, World!</h1>` as expected
 
+## Template Organization
+
+(Added 2026/05/08) Templates can now be organized into folders. This is only done for partials, so now you can group them into folders and reference them by the path
+
+```
+#jtml
+ #layout/head
+```
+
+Will reference a template in the `layout` folder named `_head.jtml`.
+
+There is no limit on nesting. As I'm starting to use this in real world situations, it became obvious that this was necessary. More updates will happen with the same preface in the future :)
 
 # Future Enhancements
-
-- Ability to organize templates into folders and include them like `#admin/login`
 
 - Named parameters
 - Conditionals
