@@ -15,6 +15,8 @@ import (
 func main() {
 	src := flag.String("src", "", "the source directory")
 	dest := flag.String("dest", "", "the destination directory")
+	srcext := flag.String("srcext", "txt", "the source filename extension")
+	destext := flag.String("destext", "html", "the destination filename extension")
 	flag.Parse()
 
 	start := time.Now()
@@ -24,7 +26,7 @@ func main() {
 		return
 	}
 
-	templates, err := process.ParseTemplates(*src)
+	templates, err := process.ParseTemplates(*src, *srcext)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -33,7 +35,7 @@ func main() {
 
 	var errs error
 	for _, res := range templateResults {
-		filename := res.Template.Name + ".html"
+		filename := res.Template.Name + "." + *destext
 		path := filepath.Join(*dest, filename)
 		err = os.WriteFile(path, []byte(res.Contents), os.ModePerm)
 		if err != nil {

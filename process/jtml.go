@@ -20,7 +20,7 @@ const (
 	newline    string = "\n"
 )
 
-func ParseTemplates(path string) ([]data.Template, error) {
+func ParseTemplates(path string, ext string) ([]data.Template, error) {
 	roots := []rootNode{}
 	err := filepath.Walk(path, func(fpath string, f fs.FileInfo, err error) error {
 		if f.IsDir() {
@@ -29,7 +29,7 @@ func ParseTemplates(path string) ([]data.Template, error) {
 		_, fn := filepath.Split(fpath)
 		ext := filepath.Ext(fn)
 
-		if ext != ".txt" {
+		if ext != "."+ext {
 			return nil
 		}
 
