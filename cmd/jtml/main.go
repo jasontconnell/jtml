@@ -15,7 +15,7 @@ import (
 func main() {
 	src := flag.String("src", "", "the source directory")
 	dest := flag.String("dest", "", "the destination directory")
-	srcext := flag.String("srcext", "txt", "the source filename extension")
+	srcext := flag.String("srcext", "jtml", "the source filename extension")
 	destext := flag.String("destext", "html", "the destination filename extension")
 	flag.Parse()
 
