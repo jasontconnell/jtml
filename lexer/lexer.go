@@ -1,6 +1,8 @@
 package lexer
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 	"strings"
 )
@@ -54,73 +56,74 @@ func Lex(input string) []Token {
 }
 
 func (l *lexer) getTokens() []Token {
+	buf := bytes.NewBufferString(l.input)
+	scn := bufio.NewScanner(buf)
 	tokens := []Token{}
 	linenum := 0
 	level := 0
-	prefix := true
 	curstate := None
-	incline := false
-	for pos := 0; pos < len(l.input); pos++ {
-		switch l.input[pos] {
-		case ' ':
-			if prefix {
-				level++
-			}
-		case '@', '#':
-			sp := pos
-			if prefix {
-				sp = pos + 1
-				curstate = Directive
-				if l.input[pos] == '#' {
-					curstate = Include
+
+	for scn.Scan() {
+		line := scn.Text()
+		incline := false
+		prefix := true
+
+		for i := 0; i < len(line); i++ {
+			switch line[i] {
+			case ' ':
+				if prefix {
+					level++
 				}
-				incline = true
-			} else {
-				curstate = Raw
-				incline = false
-			}
+			case '@', '#':
+				sp := i
+				if prefix {
+					sp = i + 1
+					curstate = Directive
+					if line[i] == '#' {
+						curstate = Include
+					}
+					incline = true
+				} else {
+					curstate = Raw
+					incline = false
+				}
 
-			identifier, endline := l.getIdentifier(l.input, sp)
-			tk := Token{
-				Type:    curstate,
-				Start:   pos,
-				Level:   level,
-				LineNum: linenum,
-				Value:   identifier,
-				Endline: endline,
-			}
-			tokens = append(tokens, tk)
-			pos += len(identifier)
+				identifier, endline := l.getIdentifier(line, sp)
+				tk := Token{
+					Type:    curstate,
+					Start:   i,
+					Level:   level,
+					LineNum: linenum,
+					Value:   identifier,
+					Endline: endline,
+				}
+				tokens = append(tokens, tk)
+				i += len(identifier)
 
-			prefix = false
-		case '\n':
-			linenum++
-			prefix = true
-			incline = false
-			level = 0
-		case '\r':
-			prefix = true
-			incline = false
-			continue
-		default:
-			identifier, endline := l.getIdentifier(l.input, pos)
-			idtype := Raw
-			if incline {
-				idtype = Parameter
+				prefix = false
+			default:
+				identifier, endline := l.getIdentifier(line, i)
+				idtype := Raw
+				if incline {
+					idtype = Parameter
+				}
+				tk := Token{
+					Type:    idtype,
+					Start:   i,
+					Value:   identifier,
+					LineNum: linenum,
+					Level:   level,
+					Endline: endline,
+				}
+				tokens = append(tokens, tk)
+				i += len(identifier)
 			}
-			tk := Token{
-				Type:    idtype,
-				Start:   pos,
-				Value:   identifier,
-				LineNum: linenum,
-				Level:   level,
-				Endline: endline,
-			}
-			tokens = append(tokens, tk)
-			pos += len(identifier)
-			prefix = false
 		}
+
+		linenum++
+		level = 0
 	}
+
 	return tokens
 }
 

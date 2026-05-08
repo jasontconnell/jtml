@@ -17,17 +17,15 @@ func New() *parser {
 }
 
 func (p *parser) DebugPrint(r Node) {
-	depth := r.GetDepth()
-	if depth <= 0 {
-		depth = 0
-	}
+	printNode(r, 0)
+}
 
-	fmt.Println("---", strings.Repeat(" ", depth), r)
-
+func printNode(r Node, d int) {
+	fmt.Println("---", strings.Repeat(" ", d), r)
 	c := r.GetChildren()
 	if len(c) > 0 {
 		for _, child := range c {
-			p.DebugPrint(child)
+			printNode(child, d+1)
 		}
 	}
 }
@@ -47,10 +45,7 @@ func (p *parser) parse(tokens []lexer.Token, stack collections.Stack[*node]) {
 	i := 0
 	for i < len(tokens) {
 		tk := tokens[i]
-		log.Println("iteration", i+1, "of", len(tokens), tk, "stack len", stack.Len())
-
 		n, num := p.nodeFromToken(tokens, tk, i, tk.Level)
-		log.Println("n", n, "num", num, "children", n.children, "param", n.parameters)
 
 		cur, ok := stack.Peek()
 		if !ok {
@@ -60,22 +55,24 @@ func (p *parser) parse(tokens []lexer.Token, stack collections.Stack[*node]) {
 		cur.children = append(cur.children, n)
 
 		next, nextIndex, hasNext := p.nextTokenNode(tokens, i+num)
-		log.Println("next", next, "idx", nextIndex, "hasNext", hasNext)
 
 		if hasNext {
 			i = nextIndex
+			log.Println(next.Level, tk.Level)
 			if next.Level > tk.Level {
 				log.Println("pushing", n)
 				stack.Push(n)
 			} else {
+				log.Println("maybe pop?", cur, next)
 				for cur.depth > next.Level {
+					log.Println("popping")
 					cur = stack.Pop()
+					log.Println(cur)
 				}
 			}
 		} else {
 			i += num
 		}
-		log.Println("i", i)
 	}
 }
 

@@ -38,7 +38,6 @@ func ParseTemplates(path string) ([]data.Template, error) {
 		if err != nil {
 			return fmt.Errorf("reading file %s. %w", fpath, err)
 		}
-		log.Print(fpath, "\n\n")
 
 		tokens := lexer.Lex(string(b))
 		p := parser.New()
@@ -115,8 +114,9 @@ func processNode(template data.Template, tn data.TemplateNode, tm map[string]dat
 				buf.WriteString(pre)
 			}
 			val := processTemplate(tmp, tm, nt.Parameters, depth+1)
-			processNodes(template, nt.Children, tm, parameters, depth+1, buf)
+			log.Println(pre, val, post)
 			buf.WriteString(val)
+			processNodes(template, nt.Children, tm, parameters, depth+1, buf)
 
 			if post != "" {
 				buf.WriteString(post)

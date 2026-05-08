@@ -7,8 +7,7 @@ import (
 	"github.com/jasontconnell/jtml/parser"
 )
 
-var home = `
-#jtml Main
+var home = `#jtml Main
  #head
   #css
   #js
@@ -40,6 +39,10 @@ func TestParseFull(t *testing.T) {
 	p := parser.New()
 	root := p.Parse(tokens)
 	p.DebugPrint(root)
+
+	for _, tk := range tokens {
+		t.Log(tk)
+	}
 }
 
 func TestParseDirectives(t *testing.T) {
@@ -50,4 +53,8 @@ func TestParseDirectives(t *testing.T) {
 	p := parser.New()
 	root := p.Parse(tokens)
 	p.DebugPrint(root)
+
+	for _, tk := range tokens {
+		t.Log(tk)
+	}
 }
