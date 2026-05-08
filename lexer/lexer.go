@@ -117,6 +117,7 @@ func (l *lexer) getTokens() []Token {
 				}
 				tokens = append(tokens, tk)
 				i += len(identifier)
+				prefix = false
 			}
 		}
 
