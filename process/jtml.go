@@ -38,12 +38,12 @@ func ParseTemplates(path string) ([]data.Template, error) {
 		if err != nil {
 			return fmt.Errorf("reading file %s. %w", fpath, err)
 		}
+		log.Print(fpath, "\n\n")
 
 		tokens := lexer.Lex(string(b))
 		p := parser.New()
 		root := p.Parse(tokens)
 
-		log.Print(fpath, "\n\n")
 		p.DebugPrint(root)
 		// for _, token := range tokens {
 		// 	log.Println(token)

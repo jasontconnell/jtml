@@ -44,10 +44,13 @@ func (p *parser) Parse(tokens []lexer.Token) Node {
 }
 
 func (p *parser) parse(tokens []lexer.Token, stack collections.Stack[*node]) {
-	for i := 0; i < len(tokens); i++ {
+	i := 0
+	for i < len(tokens) {
 		tk := tokens[i]
+		log.Println("iteration", i+1, "of", len(tokens), tk, "stack len", stack.Len())
 
 		n, num := p.nodeFromToken(tokens, tk, i, tk.Level)
+		log.Println("n", n, "num", num, "children", n.children, "param", n.parameters)
 
 		cur, ok := stack.Peek()
 		if !ok {
@@ -56,25 +59,23 @@ func (p *parser) parse(tokens []lexer.Token, stack collections.Stack[*node]) {
 		}
 		cur.children = append(cur.children, n)
 
-		next, nextIndex, hasNext := p.nextTokenNode(tokens, i+1)
-
-		log.Println(tk, next, hasNext, num, i, i+num, len(tokens))
+		next, nextIndex, hasNext := p.nextTokenNode(tokens, i+num)
+		log.Println("next", next, "idx", nextIndex, "hasNext", hasNext)
 
 		if hasNext {
 			i = nextIndex
 			if next.Level > tk.Level {
+				log.Println("pushing", n)
 				stack.Push(n)
 			} else {
-				for stack.Len() > next.Level+1 {
-					stack.Pop()
+				for cur.depth > next.Level {
+					cur = stack.Pop()
 				}
 			}
 		} else {
 			i += num
-
 		}
-
-		log.Println(tk, i, len(tokens))
+		log.Println("i", i)
 	}
 }
 
@@ -89,11 +90,11 @@ func (p *parser) nodeFromToken(tokens []lexer.Token, tk lexer.Token, idx, depth 
 	case lexer.Include:
 		prms := p.getParameters(tokens, idx+1, tk.Level)
 		n = newNode(Include, tk.Value, prms, tk.Level, tk.Endline)
-		consumed = len(prms)
+		consumed = len(prms) + 1
 	case lexer.Directive:
 		rawval, num := p.consumeRawTokens(tokens, idx+1)
 		n = newNode(Directive, tk.Value, rawval, tk.Level, tk.Endline)
-		consumed = num
+		consumed = num + 1
 	}
 	return n, consumed
 }
@@ -106,7 +107,11 @@ func (p *parser) nextTokenNode(tokens []lexer.Token, start int) (lexer.Token, in
 		switch tokens[i].Type {
 		case lexer.Parameter:
 			continue
-		case lexer.Include, lexer.Directive, lexer.Raw:
+		case lexer.Raw:
+			tk = tokens[i]
+			found = true
+			index = i
+		case lexer.Include, lexer.Directive:
 			tk = tokens[i]
 			found = true
 			index = i

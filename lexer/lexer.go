@@ -45,7 +45,7 @@ type Token struct {
 }
 
 func (t Token) String() string {
-	return fmt.Sprintf("%s start: %d type: %v level: %d line: %d endline: %v", t.Value, t.Start, t.Type, t.Level, t.LineNum, t.Endline)
+	return fmt.Sprintf("TOKEN[%s start: %d type: %v level: %d line: %d endline: %v]", t.Value, t.Start, t.Type, t.Level, t.LineNum, t.Endline)
 }
 
 func Lex(input string) []Token {
@@ -99,6 +99,8 @@ func (l *lexer) getTokens() []Token {
 			incline = false
 			level = 0
 		case '\r':
+			prefix = true
+			incline = false
 			continue
 		default:
 			identifier, endline := l.getIdentifier(l.input, pos)

@@ -67,7 +67,7 @@ func (n *node) String() string {
 	for _, p := range n.parameters {
 		prms += fmt.Sprintf("[%d: %s] ", p.index, p.raw)
 	}
-	s := fmt.Sprintf("%s %s %s (%d) [children: %d]", n.raw, n.nodeType, prms, n.depth, len(n.children))
+	s := fmt.Sprintf("[%s %s %s (%d) [children: %d]]", n.raw, n.nodeType, prms, n.depth, len(n.children))
 	return s
 }
 

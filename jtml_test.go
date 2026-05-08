@@ -15,7 +15,9 @@ var home = `
  
  #body body
   #container 
-    Hello, World!`
+    Hello, World!
+  #footer
+`
 
 var directives = `@open
 {{- define "$1" -}}
@@ -33,14 +35,14 @@ func TestJTML(t *testing.T) {
 	}
 }
 
-func TestParseRaw(t *testing.T) {
+func TestParseFull(t *testing.T) {
 	tokens := lexer.Lex(home)
 	p := parser.New()
 	root := p.Parse(tokens)
 	p.DebugPrint(root)
 }
 
-func TestParseRawDirectives(t *testing.T) {
+func TestParseDirectives(t *testing.T) {
 	tokens := lexer.Lex(directives)
 	for _, tk := range tokens {
 		t.Log(tk)
