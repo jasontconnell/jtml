@@ -61,7 +61,7 @@ func (p *parser) parse(tokens []lexer.Token, stack collections.Stack[*node]) {
 			if next.Level > tk.Level {
 				stack.Push(n)
 			} else {
-				for j := 0; j < tk.Level-next.Level-1; j++ {
+				for j := 0; j < tk.Level-next.Level; j++ {
 					cur = stack.Pop()
 				}
 			}

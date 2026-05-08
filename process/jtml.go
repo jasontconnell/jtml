@@ -42,11 +42,6 @@ func ParseTemplates(path string) ([]data.Template, error) {
 		p := parser.New()
 		root := p.Parse(tokens)
 
-		p.DebugPrint(root)
-		// for _, token := range tokens {
-		// 	log.Println(token)
-		// }
-
 		isPartial := strings.HasPrefix(fn, "_")
 		roots = append(roots, rootNode{Node: root, Name: strings.TrimSuffix(strings.TrimLeft(fn, "_"), ext), IsPartial: isPartial})
 
