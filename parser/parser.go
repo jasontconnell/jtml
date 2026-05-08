@@ -58,16 +58,11 @@ func (p *parser) parse(tokens []lexer.Token, stack collections.Stack[*node]) {
 
 		if hasNext {
 			i = nextIndex
-			log.Println(next.Level, tk.Level)
 			if next.Level > tk.Level {
-				log.Println("pushing", n)
 				stack.Push(n)
 			} else {
-				log.Println("maybe pop?", cur, next)
-				for cur.depth > next.Level {
-					log.Println("popping")
+				for j := 0; j < tk.Level-next.Level-1; j++ {
 					cur = stack.Pop()
-					log.Println(cur)
 				}
 			}
 		} else {

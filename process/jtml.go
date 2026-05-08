@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/fs"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -114,9 +113,8 @@ func processNode(template data.Template, tn data.TemplateNode, tm map[string]dat
 				buf.WriteString(pre)
 			}
 			val := processTemplate(tmp, tm, nt.Parameters, depth+1)
-			log.Println(pre, val, post)
-			buf.WriteString(val)
 			processNodes(template, nt.Children, tm, parameters, depth+1, buf)
+			buf.WriteString(val)
 
 			if post != "" {
 				buf.WriteString(post)
