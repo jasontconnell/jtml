@@ -20,7 +20,7 @@ func (t Template) Directives() []Directive {
 func (t Template) traverseNodes(n TemplateNode, f func(tn TemplateNode)) {
 	for _, tn := range n.children() {
 		f(tn)
-		if len(tn.children()) > 0 {
+		if tn != nil && len(tn.children()) > 0 {
 			t.traverseNodes(tn, f)
 		}
 	}
