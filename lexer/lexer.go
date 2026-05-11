@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"math"
 	"strings"
 )
 
@@ -52,7 +53,61 @@ func (t Token) String() string {
 
 func Lex(input string) []Token {
 	lex := &lexer{input: input}
+	lex.normalizeInput()
 	return lex.getTokens()
+}
+
+func (l *lexer) normalizeInput() {
+	buf := bytes.NewBufferString(l.input)
+	scn := bufio.NewScanner(buf)
+
+	smap := make(map[int]int)
+	lines := []string{}
+	cur := 1
+
+	for scn.Scan() {
+		line := scn.Text()
+		if len(strings.Trim(line, " ")) == 0 {
+			continue
+		}
+
+		if line[0] != ' ' {
+			lines = append(lines, line)
+			continue
+		}
+
+		tmp := strings.TrimLeft(line, " ")
+		spaces := len(line) - len(tmp)
+
+		tsp, found := l.getClosestIndent(smap, spaces)
+		if !found {
+			tsp = cur
+			smap[cur] = spaces
+			cur++
+		}
+
+		tmp = strings.Repeat(" ", tsp) + tmp
+		lines = append(lines, tmp)
+	}
+
+	l.input = strings.Join(lines, "\r\n")
+}
+
+func (l *lexer) getClosestIndent(m map[int]int, n int) (int, bool) {
+	cdiff := math.MaxInt32
+	closest := math.MinInt32
+	for k, v := range m {
+		diff := int(math.Abs(float64(n) - float64(v)))
+		if diff < cdiff {
+			closest = k
+			cdiff = diff
+			if cdiff == 0 {
+				break
+			}
+		}
+	}
+
+	return closest, cdiff == 0
 }
 
 func (l *lexer) getTokens() []Token {
