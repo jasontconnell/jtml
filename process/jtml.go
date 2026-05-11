@@ -98,30 +98,31 @@ func processNode(template data.Template, tn data.TemplateNode, tm map[string]dat
 	switch nt := tn.(type) {
 	case data.Raw:
 		val := replaceParams(nt.Value, parameters)
-		buf.WriteString(adjustDepth(val, depth, nt.Depth))
+		buf.WriteString(fmt.Sprintf("[%d %s]", depth, val) + " " + adjustDepth(val, depth))
 	case data.Stream:
 		val := processStream(nt.Stream)
-		buf.WriteString(adjustDepth(val, depth, 0))
+		buf.WriteString(adjustDepth(val, depth))
 	case data.Include:
 		tmp, ok := tm[nt.Name]
 		pre, post := getPrePost(tmp)
 
-		pre = replaceParams(adjustDepth(pre, depth, nt.Depth), nt.Parameters)
-		post = replaceParams(adjustDepth(post, depth, nt.Depth), nt.Parameters)
+		pre = replaceParams(adjustDepth(pre, depth), nt.Parameters)
+		post = replaceParams(adjustDepth(post, depth), nt.Parameters)
 
 		if ok {
 			if pre != "" {
 				buf.WriteString(pre)
 			}
-			val := processTemplate(tmp, tm, nt.Parameters, depth+1)
-			processNodes(template, nt.Children, tm, parameters, depth+1, buf)
+
+			val := processTemplate(tmp, tm, nt.Parameters, depth)
 			buf.WriteString(val)
+			processNodes(template, nt.Children, tm, parameters, depth+1, buf)
 
 			if post != "" {
 				buf.WriteString(post)
 			}
 		} else {
-			buf.WriteString(adjustDepth("<!-- template "+nt.Name+" doesn't exist -->", depth, 0))
+			buf.WriteString(adjustDepth("<!-- template "+nt.Name+" doesn't exist -->", depth))
 		}
 	case data.Root:
 		processNodes(template, nt.Children, tm, parameters, depth, buf)
@@ -130,7 +131,7 @@ func processNode(template data.Template, tn data.TemplateNode, tm map[string]dat
 
 func processNodes(template data.Template, nodes []data.TemplateNode, tm map[string]data.Template, parameters []data.Parameter, depth int, buf *bytes.Buffer) {
 	for _, c := range nodes {
-		processNode(template, c, tm, parameters, depth+1, buf)
+		processNode(template, c, tm, parameters, depth, buf)
 	}
 }
 
@@ -178,7 +179,7 @@ func replaceParams(val string, plist []data.Parameter) string {
 	return val
 }
 
-func adjustDepth(val string, docdepth, depth int) string {
+func adjustDepth(val string, depth int) string {
 	if len(val) == 0 {
 		return ""
 	}
@@ -186,7 +187,7 @@ func adjustDepth(val string, docdepth, depth int) string {
 	for i := 0; i < len(s); i++ {
 		s[i] = strings.TrimRight(s[i], trimset)
 		if len(s[i]) > 0 {
-			s[i] = strings.Repeat(" ", docdepth+depth) + s[i] + crlf
+			s[i] = strings.Repeat(" ", depth) + s[i] + crlf
 		}
 	}
 	return strings.Join(s, "")

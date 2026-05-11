@@ -8,11 +8,6 @@ import (
 	"strings"
 )
 
-type lexer struct {
-	input string
-	pos   int
-}
-
 type State int
 
 const (
@@ -52,13 +47,12 @@ func (t Token) String() string {
 }
 
 func Lex(input string) []Token {
-	lex := &lexer{input: input}
-	lex.normalizeInput()
-	return lex.getTokens()
+	lines := normalizeInput(input)
+	return getTokens(lines)
 }
 
-func (l *lexer) normalizeInput() {
-	buf := bytes.NewBufferString(l.input)
+func normalizeInput(s string) []string {
+	buf := bytes.NewBufferString(s)
 	scn := bufio.NewScanner(buf)
 
 	smap := make(map[int]int)
@@ -67,19 +61,20 @@ func (l *lexer) normalizeInput() {
 
 	for scn.Scan() {
 		line := scn.Text()
-		if len(strings.Trim(line, " ")) == 0 {
+		trimmed := strings.TrimRight(line, " ")
+		if len(strings.Trim(trimmed, " ")) == 0 {
 			continue
 		}
 
-		if line[0] != ' ' {
-			lines = append(lines, line)
+		if trimmed[0] != ' ' {
+			lines = append(lines, trimmed)
 			continue
 		}
 
-		tmp := strings.TrimLeft(line, " ")
-		spaces := len(line) - len(tmp)
+		tmp := strings.TrimLeft(trimmed, " ")
+		spaces := len(trimmed) - len(tmp)
 
-		tsp, found := l.getClosestIndent(smap, spaces)
+		tsp, found := getClosestIndent(smap, spaces)
 		if !found {
 			tsp = cur
 			smap[cur] = spaces
@@ -90,10 +85,10 @@ func (l *lexer) normalizeInput() {
 		lines = append(lines, tmp)
 	}
 
-	l.input = strings.Join(lines, "\r\n")
+	return lines
 }
 
-func (l *lexer) getClosestIndent(m map[int]int, n int) (int, bool) {
+func getClosestIndent(m map[int]int, n int) (int, bool) {
 	cdiff := math.MaxInt32
 	closest := math.MinInt32
 	for k, v := range m {
@@ -110,16 +105,13 @@ func (l *lexer) getClosestIndent(m map[int]int, n int) (int, bool) {
 	return closest, cdiff == 0
 }
 
-func (l *lexer) getTokens() []Token {
-	buf := bytes.NewBufferString(l.input)
-	scn := bufio.NewScanner(buf)
+func getTokens(lines []string) []Token {
 	tokens := []Token{}
 	linenum := 0
 	level := 0
 	curstate := None
 
-	for scn.Scan() {
-		line := scn.Text()
+	for _, line := range lines {
 		incline := false
 		prefix := true
 
@@ -143,7 +135,7 @@ func (l *lexer) getTokens() []Token {
 					incline = false
 				}
 
-				identifier, endline := l.getIdentifier(line, sp)
+				identifier, endline := getIdentifier(line, sp)
 				tk := Token{
 					Type:    curstate,
 					Start:   i,
@@ -157,7 +149,7 @@ func (l *lexer) getTokens() []Token {
 
 				prefix = false
 			default:
-				identifier, endline := l.getIdentifier(line, i)
+				identifier, endline := getIdentifier(line, i)
 				idtype := Raw
 				if incline {
 					idtype = Parameter
@@ -183,15 +175,11 @@ func (l *lexer) getTokens() []Token {
 	return tokens
 }
 
-func (l *lexer) getIdentifier(input string, pos int) (string, bool) {
+func getIdentifier(input string, pos int) (string, bool) {
 	id := ""
 	endline := false
 	for i := pos; i < len(input); i++ {
 		if input[i] == ' ' {
-			break
-		}
-		if input[i] == '\n' || input[i] == '\r' {
-			endline = true
 			break
 		}
 		id += strings.TrimSpace(string(input[i]))
