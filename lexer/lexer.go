@@ -114,8 +114,9 @@ func getTokens(lines []string) []Token {
 	for _, line := range lines {
 		incline := false
 		prefix := true
+		comment := false
 
-		for i := 0; i < len(line); i++ {
+		for i := 0; i < len(line) && !comment; i++ {
 			switch line[i] {
 			case ' ':
 				if prefix {
@@ -148,6 +149,10 @@ func getTokens(lines []string) []Token {
 				i += len(identifier)
 
 				prefix = false
+			case '`':
+				if prefix {
+					comment = true
+				}
 			default:
 				identifier, endline := getIdentifier(line, i)
 				idtype := Raw
