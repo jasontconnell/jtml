@@ -8,11 +8,11 @@ import (
 type rootNode struct {
 	Node      parser.Node
 	Name      string
-	IsPartial bool
+	WriteFile bool
 }
 
 func toTemplate(r rootNode) data.Template {
-	t := data.Template{Name: r.Name, RootNode: convertNode(r.Node), IsPartial: r.IsPartial}
+	t := data.Template{Name: r.Name, RootNode: convertNode(r.Node), WriteFile: r.WriteFile}
 	return t
 }
 
@@ -21,10 +21,9 @@ func convertNode(n parser.Node) data.TemplateNode {
 	switch n.GetType() {
 	case parser.Directive:
 		tn = data.Directive{
-			Name:       n.TokenLiteral(),
-			Parameters: convertParameters(n.GetParameters()),
-			Children:   convertNodes(n.GetChildren()),
-			Depth:      n.GetDepth(),
+			Name:     n.TokenLiteral(),
+			Children: convertNodes(n.GetChildren()),
+			Depth:    n.GetDepth(),
 		}
 	case parser.Include:
 		tn = data.Include{

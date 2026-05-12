@@ -21,7 +21,7 @@ const (
 )
 
 func ParseTemplates(path string, srcext string) ([]data.Template, error) {
-	roots := []rootNode{}
+	templates := []data.Template{}
 	err := filepath.Walk(path, func(fpath string, f fs.FileInfo, err error) error {
 		if f.IsDir() {
 			return nil
@@ -45,20 +45,19 @@ func ParseTemplates(path string, srcext string) ([]data.Template, error) {
 
 		d := strings.TrimPrefix(dir, path)
 		cleandir := strings.TrimPrefix(strings.TrimPrefix(d, "/"), "\\")
-		name := strings.Replace(cleandir, "\\", "/", -1) + strings.TrimLeft(fn, "_")
-		name = strings.TrimSuffix(name, "."+srcext)
+
+		rawname := strings.TrimSuffix(fn, "."+srcext)
+
+		name := strings.Replace(cleandir, "\\", "/", -1) + strings.TrimLeft(rawname, "_")
 
 		isPartial := strings.HasPrefix(fn, "_")
-		roots = append(roots, rootNode{Node: root, Name: name, IsPartial: isPartial})
+
+		t := toTemplate(rootNode{Node: root, Name: name, WriteFile: !isPartial})
+
+		templates = append(templates, t)
 
 		return nil
 	})
-
-	templates := []data.Template{}
-	for _, r := range roots {
-		t := toTemplate(r)
-		templates = append(templates, t)
-	}
 
 	return templates, err
 }
@@ -71,7 +70,7 @@ func ProcessTemplates(templates []data.Template) []data.TemplateResult {
 
 	var results []data.TemplateResult
 	for _, t := range templates {
-		if t.IsPartial {
+		if !t.WriteFile {
 			continue
 		}
 
@@ -98,7 +97,7 @@ func processNode(template data.Template, tn data.TemplateNode, tm map[string]dat
 	switch nt := tn.(type) {
 	case data.Raw:
 		val := replaceParams(nt.Value, parameters)
-		buf.WriteString(fmt.Sprintf("[%d %s]", depth, val) + " " + adjustDepth(val, depth))
+		buf.WriteString(adjustDepth(val, depth))
 	case data.Stream:
 		val := processStream(nt.Stream)
 		buf.WriteString(adjustDepth(val, depth))
@@ -157,16 +156,17 @@ func processStream(nodes []data.TemplateNode) string {
 	return s
 }
 
-func paramValue(plist []data.Parameter) string {
+func paramValue(plist []data.TemplateNode) string {
 	s := ""
 	for _, p := range plist {
-		s += strings.Trim(p.Value, trimset)
-		if p.Endline {
-			s += "\n"
-		} else {
-			s += " "
+		if nt, ok := p.(data.Raw); ok {
+			s += strings.Trim(nt.Value, trimset)
+			if nt.Endline {
+				s += "\n"
+			} else {
+				s += " "
+			}
 		}
-
 	}
 	return strings.TrimRight(s, whitespace)
 }
@@ -198,9 +198,9 @@ func getPrePost(tmp data.Template) (string, string) {
 	for _, d := range tmp.Directives() {
 		switch d.Name {
 		case "open":
-			pre = paramValue(d.Parameters)
+			pre = paramValue(d.Children)
 		case "close":
-			post = paramValue(d.Parameters)
+			post = paramValue(d.Children)
 		}
 	}
 	return pre, post

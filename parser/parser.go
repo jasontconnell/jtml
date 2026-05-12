@@ -31,7 +31,7 @@ func printNode(r Node, d int) {
 }
 
 func (p *parser) Parse(tokens []lexer.Token) Node {
-	root := newNode(Root, "", nil, -1, false)
+	root := newNode(Root, "", nil, nil, -1, false)
 
 	stack := collections.NewStack[*node]()
 	stack.Push(root)
@@ -77,15 +77,15 @@ func (p *parser) nodeFromToken(tokens []lexer.Token, tk lexer.Token, idx, depth 
 	switch tk.Type {
 	case lexer.Raw:
 		rawval, num := p.consumeRawTokens(tokens, idx)
-		n = newNode(Stream, "", rawval, depth, tk.Endline)
+		n = newNode(Stream, "", nil, rawval, depth, tk.Endline)
 		consumed = num
 	case lexer.Include:
 		prms := p.getParameters(tokens, idx+1, tk.Level)
-		n = newNode(Include, tk.Value, prms, tk.Level, tk.Endline)
+		n = newNode(Include, tk.Value, nil, prms, tk.Level, tk.Endline)
 		consumed = len(prms) + 1
 	case lexer.Directive:
 		rawval, num := p.consumeRawTokens(tokens, idx+1)
-		n = newNode(Directive, tk.Value, rawval, tk.Level, tk.Endline)
+		n = newNode(Directive, tk.Value, rawval, nil, tk.Level, tk.Endline)
 		consumed = num + 1
 	}
 	return n, consumed
@@ -128,7 +128,7 @@ func (p *parser) consumeRawTokens(tokens []lexer.Token, start int) ([]*node, int
 	nodes := []*node{}
 
 	for _, tk := range st {
-		n := newNode(Raw, tk.Value, nil, tk.Level, tk.Endline)
+		n := newNode(Raw, tk.Value, nil, nil, tk.Level, tk.Endline)
 		nodes = append(nodes, n)
 	}
 

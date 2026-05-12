@@ -3,7 +3,7 @@ package data
 type Template struct {
 	Name      string
 	RootNode  TemplateNode
-	IsPartial bool
+	WriteFile bool
 }
 
 func (t Template) Directives() []Directive {
@@ -45,10 +45,9 @@ type Include struct {
 }
 
 type Directive struct {
-	Name       string
-	Parameters []Parameter
-	Children   []TemplateNode
-	Depth      int
+	Name     string
+	Children []TemplateNode
+	Depth    int
 }
 
 type Parameter struct {

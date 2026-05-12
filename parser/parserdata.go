@@ -51,12 +51,12 @@ type node struct {
 	endline    bool
 }
 
-func newNode(nodeType NodeType, raw string, parameters []*node, depth int, endline bool) *node {
+func newNode(nodeType NodeType, raw string, children, parameters []*node, depth int, endline bool) *node {
 	return &node{
 		nodeType:   nodeType,
 		raw:        raw,
 		parameters: parameters,
-		children:   []*node{},
+		children:   children,
 		depth:      depth,
 		endline:    endline,
 	}
