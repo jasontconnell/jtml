@@ -1,5 +1,7 @@
 # JTML
-JTML is a project I created because I was sick of building HTML pages. While Go templates can make it a little easier, the syntax is still repeated ad nauseum.
+JTML is a project I created because I was sick of building HTML pages. While Go templates can make it a little easier, the syntax is still repeated ad nauseum. Furthermore, HTML syntax is generally the worst and painful to look at.
+
+While HTML will still exist, the entry point to start looking will be JTML and should be much less overwhelming when diving in.
 
 ## Template
 
@@ -84,6 +86,7 @@ There is no limit on nesting. As I'm starting to use this in real world situatio
 
 - Named parameters
 - Conditionals
+- Go Tool setup
 
 ## Note
 
