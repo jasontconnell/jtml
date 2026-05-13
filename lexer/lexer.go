@@ -149,39 +149,40 @@ func getTokens(lines []string) []Token {
 				i += len(identifier)
 
 				prefix = false
-			case '[':
-				val := getParamString(line, i+1)
-				tk := Token{
-					Type:    Parameter,
-					Value:   val,
-					Level:   level,
-					LineNum: linenum,
-					Start:   i,
-					Endline: false,
-				}
-				tokens = append(tokens, tk)
-				i += len(val) + 1
-				prefix = false
 			case '`':
 				if prefix {
 					comment = true
 				}
 			default:
+				var tk Token
 				identifier, endline := getIdentifier(line, i)
 				idtype := Raw
-				if incline {
+				if incline && line[i] == '[' {
 					idtype = Parameter
+					val := getParamString(line, i+1)
+					tk = Token{
+						Type:    Parameter,
+						Value:   val,
+						Level:   level,
+						LineNum: linenum,
+						Start:   i,
+						Endline: false,
+					}
+					i += len(val) + 1
+				} else {
+					tk = Token{
+						Type:    idtype,
+						Start:   i,
+						Value:   identifier,
+						LineNum: linenum,
+						Level:   level,
+						Endline: endline,
+					}
+					i += len(identifier)
 				}
-				tk := Token{
-					Type:    idtype,
-					Start:   i,
-					Value:   identifier,
-					LineNum: linenum,
-					Level:   level,
-					Endline: endline,
-				}
+
 				tokens = append(tokens, tk)
-				i += len(identifier)
+
 				prefix = false
 			}
 		}
