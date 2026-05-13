@@ -12,13 +12,13 @@ Example
  #head
  #body
   #container
-   #h1 Hello World!
+   #h1 [Hello World!]
 ```
 
 It uses an indented syntax.
 
 ## Partial
-A partial will be named something like `_jtml.txt` and can be included into a template using `#jtml` as shown above. This particular partial is the document root, and can look like this:
+A partial will be named something like `_jtml.jtml` and can be included into a template using `#jtml` as shown above. This particular partial is the document root, and can look like this:
 
 ```
 @open
@@ -32,20 +32,40 @@ A partial will be named something like `_jtml.txt` and can be included into a te
 The `@open` and `@close` strings are `directives` and right now only open and close are supported. Due to the indented nature of the templates, these directives tell the template processor that when this partial processes, it will output everything included inside of it wrapped in the `@open` and `@close` content.
 
 ## Parameters
-Some includes can have parameters. Currently, only one parameter is supported, and only on a single line. I can see the use to have more than one, or named parameters. This can be added in time, and also support for when a parameter isn't included or a case based on what the value of the parameter is.
+Some includes can have parameters. Parameters are passed in the same line, each parameter wrapped with []. They are 1-based when referring to them in a template ($1, $2, ... $N). Currently, only index based parameters are supported. I definitely see a use case for named parameters, and being able to check for parameters.
 
 Example:
 
-_h1.txt
+_h1.jtml
 ```
 <h1>$1</h1>
 ```
 
 ```
-#h1 Hello, World!
+#h1 [Hello, World!]
 ```
 
 Will output `<h1>Hello, World!</h1>` as expected
+
+Another real world example, if you wanted to have a `<body>` tag be able to take a list of css classes, this is how you would do that.
+
+_body.jtml
+
+```
+@open
+<body class="$1">
+
+@close
+</body>
+```
+
+Usage:
+
+```
+#body [class1 class2 class3]
+```
+
+(This used to be 3 separate parameters before this update on 2026/05/13)
 
 ## Template Organization
 

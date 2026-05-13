@@ -149,6 +149,19 @@ func getTokens(lines []string) []Token {
 				i += len(identifier)
 
 				prefix = false
+			case '[':
+				val := getParamString(line, i+1)
+				tk := Token{
+					Type:    Parameter,
+					Value:   val,
+					Level:   level,
+					LineNum: linenum,
+					Start:   i,
+					Endline: false,
+				}
+				tokens = append(tokens, tk)
+				i += len(val) + 1
+				prefix = false
 			case '`':
 				if prefix {
 					comment = true
@@ -193,4 +206,15 @@ func getIdentifier(input string, pos int) (string, bool) {
 		}
 	}
 	return id, endline
+}
+
+func getParamString(input string, pos int) string {
+	str := ""
+	for i := pos; i < len(input); i++ {
+		if input[i] == ']' {
+			break
+		}
+		str += string(input[i])
+	}
+	return str
 }

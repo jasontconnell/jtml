@@ -99,7 +99,7 @@ func processNode(template data.Template, tn data.TemplateNode, tm map[string]dat
 		val := replaceParams(nt.Value, parameters)
 		buf.WriteString(adjustDepth(val, depth))
 	case data.Stream:
-		val := processStream(nt.Stream)
+		val := processStream(nt.Stream, parameters)
 		buf.WriteString(adjustDepth(val, depth))
 	case data.Include:
 		tmp, ok := tm[nt.Name]
@@ -134,7 +134,7 @@ func processNodes(template data.Template, nodes []data.TemplateNode, tm map[stri
 	}
 }
 
-func processStream(nodes []data.TemplateNode) string {
+func processStream(nodes []data.TemplateNode, params []data.Parameter) string {
 	var s string
 	linestart := true
 	for _, n := range nodes {
@@ -153,6 +153,7 @@ func processStream(nodes []data.TemplateNode) string {
 			}
 		}
 	}
+	s = replaceParams(s, params)
 	return s
 }
 

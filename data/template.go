@@ -1,5 +1,7 @@
 package data
 
+import "fmt"
+
 type Template struct {
 	Name      string
 	RootNode  TemplateNode
@@ -35,6 +37,8 @@ type TemplateNode interface {
 	children() []TemplateNode
 	name() string
 	depth() int
+
+	String() string
 }
 
 type Include struct {
@@ -100,3 +104,19 @@ func (n Directive) depth() int { return n.Depth }
 func (n Raw) depth() int       { return n.Depth }
 func (n Root) depth() int      { return -1 }
 func (n Stream) depth() int    { return n.Depth }
+
+func (n Include) String() string {
+	return fmt.Sprintf("%s %v params: %v", n.Name, n.Children, n.Parameters)
+}
+func (n Directive) String() string {
+	return fmt.Sprintf("%s %v", n.Name, n.Children)
+}
+func (n Raw) String() string {
+	return fmt.Sprintf("%s", n.Value)
+}
+func (n Root) String() string {
+	return "Root"
+}
+func (n Stream) String() string {
+	return fmt.Sprintf("%v", n.Stream)
+}
