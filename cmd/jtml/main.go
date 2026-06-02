@@ -26,6 +26,21 @@ func main() {
 		return
 	}
 
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if !filepath.IsAbs(*src) {
+		tmp := filepath.Join(cwd, *src)
+		src = &tmp
+	}
+
+	if !filepath.IsAbs(*dest) {
+		tmp := filepath.Join(cwd, *dest)
+		dest = &tmp
+	}
+
 	templates, err := process.ParseTemplates(*src, *srcext)
 	if err != nil {
 		log.Fatal(err)
