@@ -16,6 +16,8 @@ const (
 	Directive
 	Parameter
 	Raw
+	Endline
+	Indent
 )
 
 func (s State) String() string {
@@ -29,6 +31,10 @@ func (s State) String() string {
 		str = "Parameter"
 	case Raw:
 		str = "Raw"
+	case Endline:
+		str = "Endline"
+	case Indent:
+		str = "Indent"
 	}
 	return str
 }
@@ -37,13 +43,11 @@ type Token struct {
 	Value   string
 	Start   int
 	Type    State
-	Level   int
 	LineNum int
-	Endline bool
 }
 
 func (t Token) String() string {
-	return fmt.Sprintf("TOKEN[%s start: %d type: %v level: %d line: %d endline: %v]", t.Value, t.Start, t.Type, t.Level, t.LineNum, t.Endline)
+	return fmt.Sprintf("TOKEN[%s start: %d type: %v line: %d]", t.Value, t.Start, t.Type, t.LineNum)
 }
 
 func Lex(input string) []Token {
@@ -107,11 +111,10 @@ func getClosestIndent(m map[int]int, n int) (int, bool) {
 
 func getTokens(lines []string) []Token {
 	tokens := []Token{}
-	linenum := 0
 	level := 0
 	curstate := None
 
-	for _, line := range lines {
+	for linenum, line := range lines {
 		incline := false
 		prefix := true
 		comment := false
@@ -120,6 +123,7 @@ func getTokens(lines []string) []Token {
 			switch line[i] {
 			case ' ':
 				if prefix {
+					tokens = append(tokens, Token{Value: " ", Start: i, Type: Indent, LineNum: linenum})
 					level++
 				}
 			case '@', '#':
@@ -136,14 +140,12 @@ func getTokens(lines []string) []Token {
 					incline = false
 				}
 
-				identifier, endline := getIdentifier(line, sp)
+				identifier := getIdentifier(line, sp)
 				tk := Token{
 					Type:    curstate,
 					Start:   i,
-					Level:   level,
 					LineNum: linenum,
 					Value:   identifier,
-					Endline: endline,
 				}
 				tokens = append(tokens, tk)
 				i += len(identifier)
@@ -155,7 +157,7 @@ func getTokens(lines []string) []Token {
 				}
 			default:
 				var tk Token
-				identifier, endline := getIdentifier(line, i)
+				identifier := getIdentifier(line, i)
 				idtype := Raw
 				if incline && line[i] == '[' {
 					idtype = Parameter
@@ -163,10 +165,8 @@ func getTokens(lines []string) []Token {
 					tk = Token{
 						Type:    Parameter,
 						Value:   val,
-						Level:   level,
 						LineNum: linenum,
 						Start:   i,
-						Endline: false,
 					}
 					i += len(val) + 1
 				} else {
@@ -175,38 +175,38 @@ func getTokens(lines []string) []Token {
 						Start:   i,
 						Value:   identifier,
 						LineNum: linenum,
-						Level:   level,
-						Endline: endline,
 					}
 					i += len(identifier)
 				}
 
 				tokens = append(tokens, tk)
-
 				prefix = false
 			}
 		}
 
-		linenum++
+		el := Token{
+			Type:    Endline,
+			Start:   len(line) - 1,
+			LineNum: linenum,
+			Value:   "_endline_",
+		}
+		tokens = append(tokens, el)
+
 		level = 0
 	}
 
 	return tokens
 }
 
-func getIdentifier(input string, pos int) (string, bool) {
+func getIdentifier(input string, pos int) string {
 	id := ""
-	endline := false
 	for i := pos; i < len(input); i++ {
 		if input[i] == ' ' {
 			break
 		}
 		id += strings.TrimSpace(string(input[i]))
-		if i == len(input)-1 {
-			endline = true
-		}
 	}
-	return id, endline
+	return id
 }
 
 func getParamString(input string, pos int) string {

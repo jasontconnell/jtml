@@ -55,20 +55,19 @@ type Directive struct {
 }
 
 type Parameter struct {
-	Index   int
-	Value   string
-	Endline bool
+	Index int
+	Value string
 }
 
-type Stream struct {
-	Stream []TemplateNode
-	Depth  int
-}
+// type Stream struct {
+// 	Stream []TemplateNode
+// 	Depth  int
+// }
 
 type Raw struct {
-	Value   string
-	Depth   int
-	Endline bool
+	Value    string
+	Depth    int
+	Children []TemplateNode
 }
 
 type Root struct {
@@ -81,29 +80,48 @@ type TemplateResult struct {
 	Contents string
 }
 
+type Endline struct {
+}
+
+type Indent struct {
+	Depth int
+}
+
 func (n Include) node()   {}
 func (n Directive) node() {}
 func (n Raw) node()       {}
 func (n Root) node()      {}
-func (n Stream) node()    {}
+
+// func (n Stream) node()    {}
+func (n Endline) node() {}
+func (n Indent) node()  {}
 
 func (n Include) children() []TemplateNode   { return n.Children }
 func (n Directive) children() []TemplateNode { return n.Children }
-func (n Raw) children() []TemplateNode       { return nil }
+func (n Raw) children() []TemplateNode       { return n.Children }
 func (n Root) children() []TemplateNode      { return n.Children }
-func (n Stream) children() []TemplateNode    { return n.Stream }
+
+// func (n Stream) children() []TemplateNode    { return n.Stream }
+func (n Endline) children() []TemplateNode { return nil }
+func (n Indent) children() []TemplateNode  { return nil }
 
 func (n Include) name() string   { return n.Name }
 func (n Directive) name() string { return n.Name }
 func (n Raw) name() string       { return n.Value }
 func (n Root) name() string      { return "_root_" }
-func (n Stream) name() string    { return "_stream_" }
+
+// func (n Stream) name() string    { return "_stream_" }
+func (n Endline) name() string { return "_endline_" }
+func (n Indent) name() string  { return "_indent_" }
 
 func (n Include) depth() int   { return n.Depth }
 func (n Directive) depth() int { return n.Depth }
 func (n Raw) depth() int       { return n.Depth }
 func (n Root) depth() int      { return -1 }
-func (n Stream) depth() int    { return n.Depth }
+
+// func (n Stream) depth() int    { return n.Depth }
+func (n Endline) depth() int { return -1 }
+func (n Indent) depth() int  { return n.Depth }
 
 func (n Include) String() string {
 	return fmt.Sprintf("%s %v params: %v", n.Name, n.Children, n.Parameters)
@@ -117,6 +135,13 @@ func (n Raw) String() string {
 func (n Root) String() string {
 	return "Root"
 }
-func (n Stream) String() string {
-	return fmt.Sprintf("%v", n.Stream)
+
+// func (n Stream) String() string {
+// 	return fmt.Sprintf("%v", n.Stream)
+// }
+func (n Endline) String() string {
+	return "\n"
+}
+func (n Indent) String() string {
+	return " "
 }

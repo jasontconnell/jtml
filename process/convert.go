@@ -39,15 +39,20 @@ func convertNode(n parser.Node) data.TemplateNode {
 		}
 	case parser.Raw:
 		tn = data.Raw{
-			Value:   n.TokenLiteral(),
-			Depth:   n.GetDepth(),
-			Endline: n.GetEndline(),
+			Value: n.TokenLiteral(),
+			Depth: n.GetDepth(),
 		}
-	case parser.Stream:
-		tn = data.Stream{
-			Stream: convertNodes(n.GetParameters()),
-			Depth:  n.GetDepth(),
+	case parser.Indent:
+		tn = data.Indent{
+			Depth: n.GetDepth(),
 		}
+	case parser.Endline:
+		tn = data.Endline{}
+		// case parser.Stream:
+		// 	tn = data.Stream{
+		// 		Stream: convertNodes(n.GetParameters()),
+		// 		Depth:  n.GetDepth(),
+		// 	}
 	}
 	return tn
 }
@@ -56,9 +61,8 @@ func convertParameters(plist []parser.Node) []data.Parameter {
 	dplist := []data.Parameter{}
 	for _, p := range plist {
 		dp := data.Parameter{
-			Index:   p.GetIndex(),
-			Value:   p.TokenLiteral(),
-			Endline: p.GetEndline(),
+			Index: p.GetIndex(),
+			Value: p.TokenLiteral(),
 		}
 		dplist = append(dplist, dp)
 	}

@@ -41,8 +41,8 @@ func ParseTemplates(path string, srcext string) ([]data.Template, error) {
 
 		tokens := lexer.Lex(string(b))
 		p := parser.New()
-		root := p.Parse(tokens)
 
+		root := p.Parse(tokens)
 		d := strings.TrimPrefix(dir, path)
 		cleandir := strings.TrimPrefix(strings.TrimPrefix(d, "/"), "\\")
 
@@ -98,9 +98,9 @@ func processNode(template data.Template, tn data.TemplateNode, tm map[string]dat
 	case data.Raw:
 		val := replaceParams(nt.Value, parameters)
 		buf.WriteString(adjustDepth(val, depth))
-	case data.Stream:
-		val := processStream(nt.Stream, parameters)
-		buf.WriteString(adjustDepth(val, depth))
+	// case data.Stream:
+	// 	val := processStream(nt.Stream, parameters)
+	// 	buf.WriteString(adjustDepth(val, depth))
 	case data.Include:
 		tmp, ok := tm[nt.Name]
 		pre, post := getPrePost(tmp)
@@ -134,39 +134,35 @@ func processNodes(template data.Template, nodes []data.TemplateNode, tm map[stri
 	}
 }
 
-func processStream(nodes []data.TemplateNode, params []data.Parameter) string {
-	var s string
-	linestart := true
-	for _, n := range nodes {
-		if st, ok := n.(data.Raw); ok {
-			var pre string
-			if linestart && st.Depth > 0 {
-				pre = strings.Repeat(" ", st.Depth)
-			}
-			s += pre + st.Value
-			if st.Endline {
-				linestart = true
-				s += "\r\n"
-			} else {
-				s += " "
-				linestart = false
-			}
-		}
-	}
-	s = replaceParams(s, params)
-	return s
-}
+// func processStream(nodes []data.TemplateNode, params []data.Parameter) string {
+// 	var s string
+// 	linestart := true
+// 	for _, n := range nodes {
+// 		if st, ok := n.(data.Raw); ok {
+// 			var pre string
+// 			if linestart && st.Depth > 0 {
+// 				pre = strings.Repeat(" ", st.Depth)
+// 			}
+// 			s += pre + st.Value
+// 			if st.Endline {
+// 				linestart = true
+// 				s += "\r\n"
+// 			} else {
+// 				s += " "
+// 				linestart = false
+// 			}
+// 		}
+// 	}
+// 	s = replaceParams(s, params)
+// 	return s
+// }
 
 func paramValue(plist []data.TemplateNode) string {
 	s := ""
 	for _, p := range plist {
 		if nt, ok := p.(data.Raw); ok {
 			s += strings.Trim(nt.Value, trimset)
-			if nt.Endline {
-				s += "\n"
-			} else {
-				s += " "
-			}
+			s += " "
 		}
 	}
 	return strings.TrimRight(s, whitespace)

@@ -7,7 +7,7 @@ import (
 	"github.com/jasontconnell/jtml/parser"
 )
 
-var home = `#jtml Main
+var home = `#jtml [Main]
  #head
   #css
   #js
@@ -30,7 +30,7 @@ var directives = `@open
 func TestJTML(t *testing.T) {
 	tokens := lexer.Lex(home)
 	for _, tk := range tokens {
-		t.Log(tk.Type, tk.Value, tk.Level, tk.LineNum)
+		t.Log(tk.Type, tk.Value, tk.LineNum)
 	}
 }
 

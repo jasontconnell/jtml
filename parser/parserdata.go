@@ -8,8 +8,10 @@ const (
 	Raw NodeType = iota
 	Directive
 	Include
-	Stream
+	// Stream
 	Root
+	Endline
+	Indent
 )
 
 func (nt NodeType) String() string {
@@ -21,10 +23,14 @@ func (nt NodeType) String() string {
 		s = "Directive"
 	case Include:
 		s = "Include"
-	case Stream:
-		s = "Stream"
+	// case Stream:
+	// 	s = "Stream"
 	case Root:
 		s = "Root"
+	case Indent:
+		s = "Indent"
+	case Endline:
+		s = "Endline"
 	}
 	return s
 }
@@ -36,7 +42,6 @@ type Node interface {
 	GetType() NodeType
 	GetDepth() int
 	GetIndex() int
-	GetEndline() bool
 
 	String() string
 }
@@ -48,17 +53,14 @@ type node struct {
 	children   []*node
 	nodeType   NodeType
 	depth      int
-	endline    bool
 }
 
-func newNode(nodeType NodeType, raw string, children, parameters []*node, depth int, endline bool) *node {
+func newNode(nodeType NodeType, raw string, children, parameters []*node) *node {
 	return &node{
 		nodeType:   nodeType,
 		raw:        raw,
 		parameters: parameters,
 		children:   children,
-		depth:      depth,
-		endline:    endline,
 	}
 }
 
@@ -101,8 +103,4 @@ func (n *node) GetDepth() int {
 
 func (n *node) GetIndex() int {
 	return n.index
-}
-
-func (n *node) GetEndline() bool {
-	return n.endline
 }
