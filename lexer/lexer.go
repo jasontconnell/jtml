@@ -4,7 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"math"
+	"slices"
+	"sort"
 	"strings"
 )
 
@@ -55,58 +56,49 @@ func Lex(input string) []Token {
 	return getTokens(lines)
 }
 
+type spaceres struct {
+	line   string
+	spaces int
+}
+
 func normalizeInput(s string) []string {
 	buf := bytes.NewBufferString(s)
 	scn := bufio.NewScanner(buf)
 
-	smap := make(map[int]int)
-	lines := []string{}
-	cur := 1
+	lens := []int{}
+	spacereses := []spaceres{}
+	v := make(map[int]int)
 
 	for scn.Scan() {
 		line := scn.Text()
-		trimmed := strings.TrimRight(line, " ")
-		if len(strings.Trim(trimmed, " ")) == 0 {
+
+		if len(strings.Trim(line, " ")) == 0 {
 			continue
 		}
 
-		if trimmed[0] != ' ' {
-			lines = append(lines, trimmed)
+		tmp := strings.TrimLeft(line, " ")
+		spaces := len(line) - len(tmp)
+
+		if _, ok := v[spaces]; !ok {
+			lens = append(lens, spaces)
+		}
+		v[spaces] = spaces
+		spacereses = append(spacereses, spaceres{strings.TrimRight(tmp, "\r\n"), spaces})
+	}
+
+	sort.Ints(lens)
+
+	lines := []string{}
+	for _, res := range spacereses {
+		level := slices.Index(lens, res.spaces)
+		if level == -1 {
 			continue
 		}
 
-		tmp := strings.TrimLeft(trimmed, " ")
-		spaces := len(trimmed) - len(tmp)
-
-		tsp, found := getClosestIndent(smap, spaces)
-		if !found {
-			tsp = cur
-			smap[cur] = spaces
-			cur++
-		}
-
-		tmp = strings.Repeat(" ", tsp) + tmp
-		lines = append(lines, tmp)
+		lines = append(lines, strings.Repeat(" ", level)+res.line)
 	}
 
 	return lines
-}
-
-func getClosestIndent(m map[int]int, n int) (int, bool) {
-	cdiff := math.MaxInt32
-	closest := math.MinInt32
-	for k, v := range m {
-		diff := int(math.Abs(float64(n) - float64(v)))
-		if diff < cdiff {
-			closest = k
-			cdiff = diff
-			if cdiff == 0 {
-				break
-			}
-		}
-	}
-
-	return closest, cdiff == 0
 }
 
 func getTokens(lines []string) []Token {

@@ -162,7 +162,11 @@ func (p *parser) consumeTokens(tokens []lexer.Token, start int, check func(tk le
 
 	nodes := []*node{}
 	for _, tk := range st {
-		n := newNode(Raw, tk.Value, nil, nil)
+		val := tk.Value
+		if tk.Type == lexer.Endline {
+			val = "\r\n"
+		}
+		n := newNode(Raw, val, nil, nil)
 		nodes = append(nodes, n)
 	}
 
@@ -187,8 +191,9 @@ func (p *parser) getParameters(tokens []lexer.Token, start int) []*node {
 		}
 
 		p := &node{
-			index: len(prms),
-			raw:   tk.Value,
+			nodeType: Parameter,
+			index:    len(prms),
+			raw:      tk.Value,
 		}
 		prms = append(prms, p)
 	}

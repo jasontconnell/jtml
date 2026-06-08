@@ -98,9 +98,6 @@ func processNode(template data.Template, tn data.TemplateNode, tm map[string]dat
 	case data.Raw:
 		val := replaceParams(nt.Value, parameters)
 		buf.WriteString(adjustDepth(val, depth))
-	// case data.Stream:
-	// 	val := processStream(nt.Stream, parameters)
-	// 	buf.WriteString(adjustDepth(val, depth))
 	case data.Include:
 		tmp, ok := tm[nt.Name]
 		pre, post := getPrePost(tmp)
@@ -125,6 +122,8 @@ func processNode(template data.Template, tn data.TemplateNode, tm map[string]dat
 		}
 	case data.Root:
 		processNodes(template, nt.Children, tm, parameters, depth, buf)
+	case data.Endline:
+		buf.WriteString("\r\n")
 	}
 }
 
@@ -133,29 +132,6 @@ func processNodes(template data.Template, nodes []data.TemplateNode, tm map[stri
 		processNode(template, c, tm, parameters, depth, buf)
 	}
 }
-
-// func processStream(nodes []data.TemplateNode, params []data.Parameter) string {
-// 	var s string
-// 	linestart := true
-// 	for _, n := range nodes {
-// 		if st, ok := n.(data.Raw); ok {
-// 			var pre string
-// 			if linestart && st.Depth > 0 {
-// 				pre = strings.Repeat(" ", st.Depth)
-// 			}
-// 			s += pre + st.Value
-// 			if st.Endline {
-// 				linestart = true
-// 				s += "\r\n"
-// 			} else {
-// 				s += " "
-// 				linestart = false
-// 			}
-// 		}
-// 	}
-// 	s = replaceParams(s, params)
-// 	return s
-// }
 
 func paramValue(plist []data.TemplateNode) string {
 	s := ""

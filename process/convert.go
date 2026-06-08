@@ -23,36 +23,25 @@ func convertNode(n parser.Node) data.TemplateNode {
 		tn = data.Directive{
 			Name:     n.TokenLiteral(),
 			Children: convertNodes(n.GetChildren()),
-			Depth:    n.GetDepth(),
 		}
 	case parser.Include:
 		tn = data.Include{
 			Name:       n.TokenLiteral(),
 			Parameters: convertParameters(n.GetParameters()),
 			Children:   convertNodes(n.GetChildren()),
-			Depth:      n.GetDepth(),
 		}
 	case parser.Root:
 		tn = data.Root{
 			Children: convertNodes(n.GetChildren()),
-			Depth:    n.GetDepth(),
 		}
 	case parser.Raw:
 		tn = data.Raw{
 			Value: n.TokenLiteral(),
-			Depth: n.GetDepth(),
 		}
 	case parser.Indent:
-		tn = data.Indent{
-			Depth: n.GetDepth(),
-		}
+		tn = data.Indent{}
 	case parser.Endline:
 		tn = data.Endline{}
-		// case parser.Stream:
-		// 	tn = data.Stream{
-		// 		Stream: convertNodes(n.GetParameters()),
-		// 		Depth:  n.GetDepth(),
-		// 	}
 	}
 	return tn
 }

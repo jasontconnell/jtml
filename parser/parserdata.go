@@ -8,7 +8,7 @@ const (
 	Raw NodeType = iota
 	Directive
 	Include
-	// Stream
+	Parameter
 	Root
 	Endline
 	Indent
@@ -23,8 +23,8 @@ func (nt NodeType) String() string {
 		s = "Directive"
 	case Include:
 		s = "Include"
-	// case Stream:
-	// 	s = "Stream"
+	case Parameter:
+		s = "Parameter"
 	case Root:
 		s = "Root"
 	case Indent:
@@ -40,7 +40,6 @@ type Node interface {
 	GetChildren() []Node
 	GetParameters() []Node
 	GetType() NodeType
-	GetDepth() int
 	GetIndex() int
 
 	String() string
@@ -52,7 +51,6 @@ type node struct {
 	parameters []*node
 	children   []*node
 	nodeType   NodeType
-	depth      int
 }
 
 func newNode(nodeType NodeType, raw string, children, parameters []*node) *node {
@@ -69,7 +67,7 @@ func (n *node) String() string {
 	for _, p := range n.parameters {
 		prms += fmt.Sprintf("[%d: %s] ", p.index, p.raw)
 	}
-	s := fmt.Sprintf("[%s %s %s (%d) [children: %d]]", n.raw, n.nodeType, prms, n.depth, len(n.children))
+	s := fmt.Sprintf("[%s %s %s [children: %d]]", n.raw, n.nodeType, prms, len(n.children))
 	return s
 }
 
@@ -95,10 +93,6 @@ func (n *node) GetParameters() []Node {
 		list = append(list, p)
 	}
 	return list
-}
-
-func (n *node) GetDepth() int {
-	return n.depth
 }
 
 func (n *node) GetIndex() int {
