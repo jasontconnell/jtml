@@ -83,7 +83,7 @@ func normalizeInput(s string) []string {
 			lens = append(lens, spaces)
 		}
 		v[spaces] = spaces
-		spacereses = append(spacereses, spaceres{strings.TrimRight(tmp, "\r\n"), spaces})
+		spacereses = append(spacereses, spaceres{strings.TrimRight(tmp, " \r\n"), spaces})
 	}
 
 	sort.Ints(lens)

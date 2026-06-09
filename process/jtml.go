@@ -16,7 +16,6 @@ import (
 const (
 	whitespace string = " \t"
 	trimset    string = " \r\n\t"
-	crlf       string = "\r\n"
 	newline    string = "\n"
 )
 
@@ -157,11 +156,15 @@ func adjustDepth(val string, depth int) string {
 	if len(val) == 0 {
 		return ""
 	}
+	if depth < 0 {
+		depth = 0
+	}
 	s := strings.Split(val, newline)
 	for i := 0; i < len(s); i++ {
-		s[i] = strings.TrimRight(s[i], trimset)
+		s[i] = strings.Trim(s[i], trimset)
+
 		if len(s[i]) > 0 {
-			s[i] = strings.Repeat(" ", depth) + s[i] + crlf
+			s[i] = strings.Repeat(" ", depth) + s[i] + newline
 		}
 	}
 	return strings.Join(s, "")

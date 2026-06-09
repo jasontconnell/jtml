@@ -100,9 +100,7 @@ func (p *parser) nodeFromToken(tokens []lexer.Token, tk lexer.Token, idx int) (*
 	case lexer.Directive:
 		rawval, num := p.consumeTokens(tokens, idx+1, func(tk lexer.Token) bool {
 			return tk.Type != lexer.Directive
-		}, func(tk lexer.Token) bool {
-			return tk.Type == lexer.Endline
-		})
+		}, nil)
 		n = newNode(Directive, tk.Value, []*node{rawval}, nil)
 		consumed = num
 	}
@@ -164,7 +162,7 @@ func (p *parser) consumeTokens(tokens []lexer.Token, start int, check func(tk le
 	for _, tk := range st {
 		val := tk.Value
 		if tk.Type == lexer.Endline {
-			val = "\r\n"
+			val = "\n"
 		}
 		n := newNode(Raw, val, nil, nil)
 		nodes = append(nodes, n)
