@@ -68,7 +68,7 @@ func (p *parser) parse(tokens []lexer.Token, stack collections.Stack[*node]) {
 				stack.Push(n)
 			} else if indents > nextLineLevel {
 				lv := indents
-				for lv > nextLineLevel {
+				for lv > nextLineLevel && stack.Len() > 1 {
 					stack.Pop()
 					lv--
 				}
