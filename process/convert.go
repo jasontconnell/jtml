@@ -36,7 +36,8 @@ func convertNode(n parser.Node) data.TemplateNode {
 		}
 	case parser.Raw:
 		tn = data.Raw{
-			Value: n.TokenLiteral(),
+			Value:    n.TokenLiteral(),
+			Children: convertNodes(n.GetChildren()),
 		}
 	case parser.Indent:
 		tn = data.Indent{}

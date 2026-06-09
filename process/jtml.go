@@ -45,9 +45,7 @@ func ParseTemplates(path string, srcext string) ([]data.Template, error) {
 		root := p.Parse(tokens)
 		d := strings.TrimPrefix(dir, path)
 		cleandir := strings.TrimPrefix(strings.TrimPrefix(d, "/"), "\\")
-
 		rawname := strings.TrimSuffix(fn, "."+srcext)
-
 		name := strings.Replace(cleandir, "\\", "/", -1) + strings.TrimLeft(rawname, "_")
 
 		isPartial := strings.HasPrefix(fn, "_")
@@ -98,6 +96,9 @@ func processNode(template data.Template, tn data.TemplateNode, tm map[string]dat
 	case data.Raw:
 		val := replaceParams(nt.Value, parameters)
 		buf.WriteString(adjustDepth(val, depth))
+		if len(nt.Children) > 0 {
+			processNodes(template, nt.Children, tm, parameters, depth+1, buf)
+		}
 	case data.Include:
 		tmp, ok := tm[nt.Name]
 		pre, post := getPrePost(tmp)
@@ -123,7 +124,7 @@ func processNode(template data.Template, tn data.TemplateNode, tm map[string]dat
 	case data.Root:
 		processNodes(template, nt.Children, tm, parameters, depth, buf)
 	case data.Endline:
-		buf.WriteString("\r\n")
+		buf.WriteString("\n")
 	}
 }
 
