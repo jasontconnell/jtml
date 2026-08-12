@@ -36,7 +36,7 @@ func TestJTML(t *testing.T) {
 
 func TestParseFull(t *testing.T) {
 	tokens := lexer.Lex(home)
-	p := parser.New()
+	p := parser.New("\r\n")
 	root := p.Parse(tokens)
 	p.DebugPrint(root)
 
@@ -50,7 +50,7 @@ func TestParseDirectives(t *testing.T) {
 	for _, tk := range tokens {
 		t.Log(tk)
 	}
-	p := parser.New()
+	p := parser.New("\r\n")
 	root := p.Parse(tokens)
 	p.DebugPrint(root)
 

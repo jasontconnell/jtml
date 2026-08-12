@@ -14,12 +14,21 @@ import (
 )
 
 const (
-	whitespace string = " \t"
-	trimset    string = " \r\n\t"
-	newline    string = "\n"
+	whitespace   string = " \t"
+	trimset      string = " \r\n\t"
+	splitnewline string = "\n"
 )
 
-func ParseTemplates(path string, srcext string) ([]data.Template, error) {
+type JtmlProcessor struct {
+	newline string
+}
+
+func NewJtmlProcessor(newline string) *JtmlProcessor {
+	jtmlproc := &JtmlProcessor{newline: newline}
+	return jtmlproc
+}
+
+func (jp *JtmlProcessor) ParseTemplates(path string, srcext string) ([]data.Template, error) {
 	templates := []data.Template{}
 	err := filepath.Walk(path, func(fpath string, f fs.FileInfo, err error) error {
 		if f.IsDir() {
@@ -39,7 +48,7 @@ func ParseTemplates(path string, srcext string) ([]data.Template, error) {
 		}
 
 		tokens := lexer.Lex(string(b))
-		p := parser.New()
+		p := parser.New(jp.newline)
 
 		root := p.Parse(tokens)
 		d := strings.TrimPrefix(dir, path)
@@ -59,7 +68,7 @@ func ParseTemplates(path string, srcext string) ([]data.Template, error) {
 	return templates, err
 }
 
-func ProcessTemplates(templates []data.Template) []data.TemplateResult {
+func (jp *JtmlProcessor) ProcessTemplates(templates []data.Template) []data.TemplateResult {
 	tm := make(map[string]data.Template)
 	for _, t := range templates {
 		tm[t.Name] = t
@@ -71,7 +80,7 @@ func ProcessTemplates(templates []data.Template) []data.TemplateResult {
 			continue
 		}
 
-		output := processTemplate(t, tm, nil, 0)
+		output := jp.processTemplate(t, tm, nil, 0)
 
 		res := data.TemplateResult{
 			Template: t,
@@ -83,53 +92,53 @@ func ProcessTemplates(templates []data.Template) []data.TemplateResult {
 	return results
 }
 
-func processTemplate(template data.Template, tm map[string]data.Template, parameters []data.Parameter, depth int) string {
+func (jp *JtmlProcessor) processTemplate(template data.Template, tm map[string]data.Template, parameters []data.Parameter, depth int) string {
 	b := bytes.NewBufferString("")
-	processNode(template, template.RootNode, tm, parameters, depth, b)
+	jp.processNode(template, template.RootNode, tm, parameters, depth, b)
 
 	return b.String()
 }
 
-func processNode(template data.Template, tn data.TemplateNode, tm map[string]data.Template, parameters []data.Parameter, depth int, buf *bytes.Buffer) {
+func (jp *JtmlProcessor) processNode(template data.Template, tn data.TemplateNode, tm map[string]data.Template, parameters []data.Parameter, depth int, buf *bytes.Buffer) {
 	switch nt := tn.(type) {
 	case data.Raw:
 		val := replaceParams(nt.Value, parameters)
-		buf.WriteString(adjustDepth(val, depth))
+		buf.WriteString(adjustDepth(val, depth, jp.newline))
 		if len(nt.Children) > 0 {
-			processNodes(template, nt.Children, tm, parameters, depth+1, buf)
+			jp.processNodes(template, nt.Children, tm, parameters, depth+1, buf)
 		}
 	case data.Include:
 		tmp, ok := tm[nt.Name]
 		pre, post := getPrePost(tmp)
 
-		pre = replaceParams(adjustDepth(pre, depth), nt.Parameters)
-		post = replaceParams(adjustDepth(post, depth), nt.Parameters)
+		pre = replaceParams(adjustDepth(pre, depth, jp.newline), nt.Parameters)
+		post = replaceParams(adjustDepth(post, depth, jp.newline), nt.Parameters)
 
 		if ok {
 			if pre != "" {
 				buf.WriteString(pre)
 			}
 
-			val := processTemplate(tmp, tm, nt.Parameters, depth)
+			val := jp.processTemplate(tmp, tm, nt.Parameters, depth)
 			buf.WriteString(val)
-			processNodes(template, nt.Children, tm, parameters, depth+1, buf)
+			jp.processNodes(template, nt.Children, tm, parameters, depth+1, buf)
 
 			if post != "" {
 				buf.WriteString(post)
 			}
 		} else {
-			buf.WriteString(adjustDepth("<!-- template "+nt.Name+" doesn't exist -->", depth))
+			buf.WriteString(adjustDepth("<!-- template "+nt.Name+" doesn't exist -->", depth, jp.newline))
 		}
 	case data.Root:
-		processNodes(template, nt.Children, tm, parameters, depth, buf)
+		jp.processNodes(template, nt.Children, tm, parameters, depth, buf)
 	case data.Endline:
-		buf.WriteString("\n")
+		buf.WriteString(jp.newline)
 	}
 }
 
-func processNodes(template data.Template, nodes []data.TemplateNode, tm map[string]data.Template, parameters []data.Parameter, depth int, buf *bytes.Buffer) {
+func (jp *JtmlProcessor) processNodes(template data.Template, nodes []data.TemplateNode, tm map[string]data.Template, parameters []data.Parameter, depth int, buf *bytes.Buffer) {
 	for _, c := range nodes {
-		processNode(template, c, tm, parameters, depth, buf)
+		jp.processNode(template, c, tm, parameters, depth, buf)
 	}
 }
 
@@ -152,14 +161,14 @@ func replaceParams(val string, plist []data.Parameter) string {
 	return val
 }
 
-func adjustDepth(val string, depth int) string {
+func adjustDepth(val string, depth int, newline string) string {
 	if len(val) == 0 {
 		return ""
 	}
 	if depth < 0 {
 		depth = 0
 	}
-	s := strings.Split(val, newline)
+	s := strings.Split(val, splitnewline)
 	for i := 0; i < len(s); i++ {
 		s[i] = strings.Trim(s[i], trimset)
 

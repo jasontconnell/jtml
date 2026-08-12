@@ -10,10 +10,11 @@ import (
 )
 
 type parser struct {
+	newline string
 }
 
-func New() *parser {
-	return new(parser)
+func New(newline string) *parser {
+	return &parser{newline: newline}
 }
 
 func (p *parser) DebugPrint(r Node) {
@@ -162,7 +163,7 @@ func (p *parser) consumeTokens(tokens []lexer.Token, start int, check func(tk le
 	for _, tk := range st {
 		val := tk.Value
 		if tk.Type == lexer.Endline {
-			val = "\n"
+			val = p.newline
 		}
 		n := newNode(Raw, val, nil, nil)
 		nodes = append(nodes, n)

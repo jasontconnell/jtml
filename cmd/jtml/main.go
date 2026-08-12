@@ -17,6 +17,7 @@ func main() {
 	dest := flag.String("dest", "", "the destination directory")
 	srcext := flag.String("srcext", "jtml", "the source filename extension")
 	destext := flag.String("destext", "html", "the destination filename extension")
+	endlines := flag.String("endlines", "crlf", "which form of endlines should be output. crlf or lf")
 	flag.Parse()
 
 	start := time.Now()
@@ -41,12 +42,19 @@ func main() {
 		dest = &tmp
 	}
 
-	templates, err := process.ParseTemplates(*src, *srcext)
+	nline := "\r\n"
+	if *endlines == "lf" {
+		nline = "\n"
+	}
+
+	processor := process.NewJtmlProcessor(nline)
+
+	templates, err := processor.ParseTemplates(*src, *srcext)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	templateResults := process.ProcessTemplates(templates)
+	templateResults := processor.ProcessTemplates(templates)
 
 	var errs error
 	for _, res := range templateResults {

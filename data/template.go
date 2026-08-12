@@ -81,6 +81,7 @@ type TemplateResult struct {
 }
 
 type Endline struct {
+	Newline string
 }
 
 type Indent struct {
@@ -140,7 +141,7 @@ func (n Root) String() string {
 // 	return fmt.Sprintf("%v", n.Stream)
 // }
 func (n Endline) String() string {
-	return "\n"
+	return n.Newline
 }
 func (n Indent) String() string {
 	return " "

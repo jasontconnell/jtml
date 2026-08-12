@@ -42,7 +42,7 @@ func convertNode(n parser.Node) data.TemplateNode {
 	case parser.Indent:
 		tn = data.Indent{}
 	case parser.Endline:
-		tn = data.Endline{}
+		tn = data.Endline{Newline: n.String()}
 	}
 	return tn
 }
